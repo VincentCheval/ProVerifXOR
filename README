@@ -1,0 +1,78 @@
+Protocol verifier, copyright INRIA-CNRS, by Bruno Blanchet,
+Vincent Cheval, and Marc Sylvestre 2000-2026.
+
+(*************************************************************
+
+XOR EXTENSION
+
+Anonymously submitted for CCS 2026
+Anonymous authors
+
+*************************************************************)
+
+This software can be used to prove secrecy and authenticity properties
+of cryptographic protocols.
+
+INSTALL
+
+To run this software, you need Objective Caml version 5.3 or
+higher. Objective Caml can be downloaded from
+	http://caml.inria.fr
+
+
+Furthermore, on Mac OS X, you need to install XCode if you do not
+already have it. It can be downloaded from
+	https://developer.apple.com/xcode/
+
+* under Unix / Mac
+
+This will create a directory named proverifXOR in the current directory.
+Go into this directory, and build the program:
+
+	cd proverifXOR
+	./build
+
+This will create the executable proverif.
+
+USAGE
+
+The program proverif takes as input a description of a cryptographic
+protocol, and checks whether it satisfies secrecy, authenticity, or
+equivalence properties. 
+
+The program uses the same command as Vanilla ProVerif. To run a ProVerif file ending
+in .pv, use
+	./proverif <filename>.pv
+
+The folder examples_distribution contains the files that came from the official distribution
+of ProVerif.
+
+The folder examples_XOR contains the examples used to evaluate the extension XOR.
+
+*****
+***** IMPORTANT NOTE FOR XOR EXTENSION
+*****
+
+Contrary to standard input file of ProVerif, the functions used with exclusive OR are
+natively encoded in ProVerif and should not be declared. For example, file
+	examples_XOR/Ex-false/toy-false1.pv
+contains the following code:
+
+---------
+
+free c: channel.
+
+free s:bitstring [private].
+free n1:bitstring [private].
+free n2:bitstring [private].
+
+query attacker(s).
+
+process
+	out(c,n1); out(c,xor(n2,n1)); in(c, =n2); out(c,s)
+
+
+--------
+
+The function "xor" can directly be used without being declared. Similarly, the constant "zero"
+can be directly used without being declared.

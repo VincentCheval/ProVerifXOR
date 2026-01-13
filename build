@@ -1,0 +1,35 @@
+#!/bin/sh
+
+if uname -a | egrep -q \(Cygwin\)\|\(MINGW\)
+then
+    EXEC=.exe
+else
+    EXEC=
+fi
+
+dune_build()
+{
+    dune build src/$2.exe --no-print-directory &&\
+    if [ "$2.exe" != "$1$EXEC" ]
+    then
+	mv $2.exe $1$EXEC
+    fi
+}
+
+case X$1 in
+    Xdune | X )
+	echo Compilation of all ProVerif executables &&\
+	dune_build proverif main &&\
+	echo Build successful! &&\
+	echo You can invoke ./proverif --help to display version data and usage information. ;;
+
+    Xclean )
+	rm -f proverif$EXEC
+	rm -f src/*lexer.ml src/*lexertotex.ml src/*parser.ml src/*parser.mli src/*.cmx src/*.cmo src/*.cmi src/*.o
+	rm -rf src/_build _build;;
+
+    *)
+	echo Unknown option
+esac
+
+
