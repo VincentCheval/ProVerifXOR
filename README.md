@@ -13,26 +13,31 @@ Anonymous authors
 This software can be used to prove secrecy and authenticity properties
 of cryptographic protocols.
 
-## INSTALL
+## INSTALL (under Unix / Mac)
 
-To run this software, you need Objective Caml version 5.3 or
+To run this software, you need Objective Caml version 5.2 or
 higher. Objective Caml can be downloaded from
-	http://caml.inria.fr
+	https://ocaml.org
 
+The installation of OCaml is done through Opam. If you have already an older version of Ocaml, you can run the following to update it
 
-Furthermore, on Mac OS X, you need to install XCode if you do not
-already have it. It can be downloaded from
-	https://developer.apple.com/xcode/
+	opam update
+	opam switch create 5.2.0
 
-### under Unix / Mac
+ ProVerif requires the dune package which should normally be installed with your opam installation. If it's not the case:
 
-This will create a directory named proverifXOR in the current directory.
-Go into this directory, and build the program:
+	opam install dune
+
+Download the repository (or clone it) of ProVerif. This will create a directory named proverifXOR. Go into this directory, and build the program:
 
 	cd proverifXOR
 	./build
 
 This will create the executable proverif.
+
+To remove the installed files:
+
+	./build clean
 
 ## USAGE
 

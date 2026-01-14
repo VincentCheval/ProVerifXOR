@@ -1,7 +1,7 @@
 (include_subdirs qualified)
 (executables
- (names main main_interact proveriftotex)
- (libraries lablgtk2 unix str)
+ (names main)
+ (libraries unix str)
  (modules_without_implementation piptree pitptree pitypes ptree types)
  (foreign_stubs (language c) (names columns))
  (promote (until-clean) (into ../)))
