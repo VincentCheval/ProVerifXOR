@@ -1,9 +1,9 @@
 (* Needham Schroeder with xor 
 vulnerable to the Lowe man-in-the-middle attack
 
-I -> R: aenc(<1, ni, I>, pk(R))
-R -> I: aenc(<2, ni ,nr + R>, pk(I))
-I -> R: aenc(<3, nr>, pk(R))
+I -> R: aenc(<ni, I>, pk(R))
+R -> I: aenc(<ni ,nr + R>, pk(I))
+I -> R: aenc(<nr>, pk(R))
 
 
 This protocol has been proposed in a paper published at LICS 2003 by Chevalier et al.

@@ -46,9 +46,6 @@ Note that we compensate the absence of the keyPartImpMiddle in our model by two 
 
 free c: channel.
 
-set simpEqAll = true.
-
-(* const DATA:bitstring. *)
 const IMP:bitstring.
 const EXP:bitstring.
 const PIN:bitstring.

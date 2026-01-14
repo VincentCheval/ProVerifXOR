@@ -9,9 +9,11 @@ This protocol has been studied in the following paper:
 Ralf Küsters, Tomasz Truderung
 Reducing Protocol Analysis with XOR to the XOR-Free Case in the Horn Theory Based Approach. J. Autom. Reason. 46(3-4): 325-352 (2011)
 
+In CSF'18, their model include TAGs that we reproduced here.
 
 Security properties: we consider secrecy of the nonces Ni and Nr, as well as authentication (injective agreement) on both sides.
 All these properties hold.
+
 *)
 
 

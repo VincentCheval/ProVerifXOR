@@ -8,9 +8,6 @@ type skey.
 type spkey.
 type sskey.
 
-set verboseRules = true.
-set verboseBase=true. 
-
 fun hash(bitstring): bitstring.
 
 free s:bitstring [private].
@@ -20,14 +17,3 @@ query attacker(s).
 process
   !in(c,x:bitstring);  new k[]:bitstring; out(c, xor(x,k))
 
-
-(*
-
-4 -- attacker(ACxor(k[x = ACxor(v,z),!1 = @sid],v)) && attacker(ACxor(v,z)) -> attacker(ACxor(k[x = ACxor(k[x = ACxor(v,z),!1 = @sid],v),!1 = @sid_1],z))
-Variant AC status: true.Marked fact: Hyp 0: none - Hyp 1: none - 
-
-8 -- attacker(y) && attacker(ACxor(y,v)) -> attacker(ACxor(k[x = ACxor(y,v),!1 = @sid],k[x = y,!1 = @sid_1],v))
-Variant AC status: true.Marked fact: Hyp 0: none - Hyp 1: none - 
-
-
-*)

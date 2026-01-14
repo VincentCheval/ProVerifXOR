@@ -29,8 +29,6 @@ fun rot(bitstring,bitstring): bitstring.
 fun lh(bitstring): bitstring.
 fun rh(bitstring): bitstring.
 
-
-
 (* k, na, nb *)
 event endR(bitstring,bitstring,bitstring).
 event startT(bitstring,bitstring,bitstring).

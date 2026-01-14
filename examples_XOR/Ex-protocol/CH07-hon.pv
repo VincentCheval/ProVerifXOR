@@ -37,10 +37,6 @@
 
 free c: channel.
 
-(* set verboseRules = true. *)
-set simpEqAll = true.
-(* set verboseBase=true. *)
-
 fun h(bitstring): bitstring.
 fun rot(bitstring,bitstring): bitstring.
 fun lh(bitstring): bitstring.

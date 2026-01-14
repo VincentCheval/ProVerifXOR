@@ -8,10 +8,6 @@ type skey.
 type spkey.
 type sskey.
 
-(* set verboseRules = true.
-set verboseBase=true.  
-set verboseRedundant = true. *)
-
 fun hash(bitstring): bitstring.
 
 free k:bitstring [private].

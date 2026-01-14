@@ -1,5 +1,4 @@
 (* toy *)
-(* termination ok: grace a la subsumption ?*)
 
 free c: channel.
 

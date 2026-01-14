@@ -23,7 +23,6 @@ free s:bitstring [private].
 
 query attacker(s).
 
-(* The property is correct ! (wrong parenthesis. See stef11bis2.pv) *)
 process
   in(c,x:bitstring)[precise]; new nb:bitstring; out(c,(hash(xor(nb,xor(x,k))),nb))
 | new na:bitstring; out(c,na); in(c, (x1:bitstring,x2:bitstring)); if hash(xor(xor(na,k),x2)) = x1 then  out(c,s)

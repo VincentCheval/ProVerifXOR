@@ -35,7 +35,6 @@ free c: channel.
 
 fun h(bitstring,bitstring): bitstring.
 
-
 (* id, r1, r2 *)
 event endR(bitstring,bitstring,bitstring).
 event startT(bitstring,bitstring,bitstring).
