@@ -1,0 +1,12 @@
+free c: channel.
+
+free s:bitstring [private].
+free n1:bitstring [private].
+free n2:bitstring [private].
+free n3:bitstring [private].
+free n4:bitstring [private].
+
+query attacker(s).
+
+process
+	out(c,xor(n1,n2)); out(c,xor(n2,n3)); out(c,xor(n3,n4));  in(c,x:bitstring); if x = xor(n1,n4) then out(c,s)

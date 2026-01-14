@@ -1,0 +1,29 @@
+(* CR protocol *)
+(* I -> R: na
+   R -> I: <h(na + nb +k ), nb>
+*)
+
+set verboseRules = true.
+set verboseBase = true.
+set verboseRedundant = true.
+
+free c: channel.
+
+type host.
+type key.
+type pkey.
+type skey.
+type spkey.
+type sskey.
+
+fun hash(bitstring): bitstring.
+
+free k:bitstring [private].
+free s:bitstring [private].
+
+query attacker(s).
+
+(* The property is correct ! (wrong parenthesis. See stef11bis2.pv) *)
+process
+  in(c,x:bitstring)[precise]; new nb:bitstring; out(c,(hash(xor(nb,xor(x,k))),nb))
+| new na:bitstring; out(c,na); in(c, (x1:bitstring,x2:bitstring)); if hash(xor(xor(na,k),x2)) = x1 then  out(c,s)

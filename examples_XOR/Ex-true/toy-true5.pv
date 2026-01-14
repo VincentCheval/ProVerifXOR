@@ -1,0 +1,24 @@
+
+free c: channel.
+
+type host.
+type key.
+type pkey.
+type skey.
+type spkey.
+type sskey.
+
+(* set verboseRules = true.
+set verboseBase=true.  
+set verboseRedundant = true. *)
+
+fun hash(bitstring): bitstring.
+
+free k:bitstring [private].
+free s:bitstring [private].
+
+query attacker(s).
+
+process
+  in(c,x:bitstring); in(c,y:bitstring); out(c, xor(x,xor(y,k)))
+

@@ -1,0 +1,20 @@
+
+free c: channel.
+
+fun senc(bitstring,bitstring): bitstring.
+reduc forall x:bitstring, y:bitstring; sdec(senc(x,y),y) = x.
+
+free k:bitstring [private].
+free s:bitstring [private].
+
+free a1: bitstring [private].
+free b1: bitstring [private].
+free a2: bitstring [private].
+free b2: bitstring [private].
+
+query attacker(s).
+
+process
+  (in(c,z:bitstring); let (x1:bitstring,x2:bitstring) = sdec(z,k) in out(c, xor(x1,x2))) | out(c,b1) | out(c,b2) | out(c,senc((xor(a1,a2),xor(b1,b2)),k)) | out(c,senc(s,xor(a1,a2))).
+
+

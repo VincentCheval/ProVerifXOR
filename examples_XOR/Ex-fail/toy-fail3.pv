@@ -1,0 +1,12 @@
+
+free c: channel.
+
+fun h(bitstring):bitstring[private].
+
+free s:bitstring [private].
+
+query attacker(s).
+
+process
+   in(c,x:bitstring);   out(c, xor(x,h(x)))
+

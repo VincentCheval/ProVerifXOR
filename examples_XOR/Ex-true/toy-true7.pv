@@ -1,0 +1,71 @@
+
+free c: channel.
+
+type host.
+type key.
+type pkey.
+type skey.
+type spkey.
+type sskey.
+
+set verboseRules = true.
+set simpEqAll = true.
+set verboseBase=true. 
+
+fun hash(bitstring): bitstring.
+
+(* const zero:bitstring.
+fun xor(bitstring,bitstring):bitstring [AC].
+
+equation forall x:bitstring; xor(x,x) = zero [simplification]. 
+equation forall x:bitstring; xor(x,zero) = x [simplification].
+equation forall x:bitstring; xor(zero,x) = x [simplification].
+equation forall x,y:bitstring; xor(x,xor(x,y)) = y [simplification].
+equation forall x,y:bitstring; xor(xor(x,y),x) = y [simplification].
+
+
+equation forall x:bitstring; xor(x,x) = zero [mark={true,true}]. 
+equation forall x:bitstring; xor(x,zero) = x [mark={true,true}].
+equation forall x:bitstring; xor(zero,x) = x [mark={true,true}]. 
+equation forall x,y,z:bitstring; xor(xor(x,y),xor(y,z)) = xor(x,z) [mark={true,true}].
+equation forall x,y:bitstring; xor(x,xor(x,y)) = y [mark={true,true}].
+equation forall x,y:bitstring; xor(xor(x,y),x) = y [mark={true,true}]. *)
+
+free s:bitstring [private].
+
+query attacker(s).
+
+process
+  in(c,x:bitstring);  new k[]:bitstring; out(c, xor(x,k))
+
+
+(* Sur cet exemple, on génère des clauses avec des k[ ] imbriqués de la forme:
+
+4 -- attacker(ACxor(k[x = ACxor(v,z)],v)) && attacker(ACxor(v,z)) -> attacker(ACxor(k[x = ACxor(k[x = ACxor(v,z)],v)],z))
+Variant AC status: true.Marked fact: Hyp 0: none - Hyp 1: none - 
+
+
+Or, sur cet exemple précis, pour que cela soit possible, il faudrait que v+z  = k[v+z]+v modulo AC et donc z = k[v+z] ce qui me semble impossible.
+
+7 -- attacker(y) && attacker(ACxor(y,v)) -> attacker(ACxor(k[x = ACxor(y,v)],k[x = y],v))
+Variant AC status: true.Marked fact: Hyp 0: none - Hyp 1: none - 
+
+*)
+
+(*
+
+                                                                             
+Rule with conclusion selected:
+attacker(x_1) -> attacker(k[x = x_1])
+Variant AC status: true. Marked facts: Hyp 0: static xor - 
+18 rules inserted. Base: 18 rules (14 with conclusion selected). Queue: 6 rules.
+------------ Resulting base and rules added in queue ----------
+*** Rules with the conclusion selected
+1 -- attacker(x_1) -> attacker(k[x = x_1])
+Variant AC status: true.Marked fact: Hyp 0: static xor - 
+
+2 -- attacker(v) -> attacker(ACxor(k[x = v],v))
+Variant AC status: false.Marked fact: Hyp 0: none - 
+
+
+*)

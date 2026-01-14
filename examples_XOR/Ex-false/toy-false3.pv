@@ -1,0 +1,11 @@
+free c: channel.
+
+free s:bitstring [private].
+free n1:bitstring [private].
+free n3:bitstring [private].
+free n4:bitstring [private].
+
+query attacker(s).
+
+process
+	out(c,xor(n1,n3)); out(c,xor(n4,xor(n1,n3)));  in(c, =n4); out(c,s)

@@ -1,0 +1,113 @@
+(* 
+  CH07 RFID protocol model based on 
+  "Attacks on RFID protocols" v1.1 from Aug 6, 2009, by Ton van Deursen and Sasa Radomirovic
+  This model focuses on authentication properties.
+
+  Reader R, Tag T, shared knowledge k, ID.
+
+  R  knows k, id
+  T  knows k, id
+  R: fresh(r1)
+  R -> T: r1
+  T: fresh(r2)
+  T -> R: r2,lh(rot(ID,h(r1⊕r2⊕k))⊕h(r1⊕r2⊕k)) 
+  R -> T: rh(rot(ID,h(r1⊕r2⊕k))⊕h(r1⊕r2⊕k))
+
+ Our model:
+  - we consider a model with many tags/readers, and an arbitrary number of sessions of each
+  - we also model dynamic corruption
+
+  Security properties:
+  - aliveness: when the reader receives the last message (interacting with the tag with key k), he knows that the tag with key k has played at some point
+  - recent aliveness: when the reader receives the last message (interacting with the tag with key k), he knows that the tag with key k  has played recently (presence of r1)
+  - agreement on k, r1, r2: when the reader receives the last message with id, r1, and r2 (chosen by the tag) then the tag has indeed sent these values.
+  - agreement on k + r1+  r2: when the reader receives the last message with id, r1, and r2 (chosen by the tag) then the tag has indeed sent these values. 
+  - same properties for the tag: aliveness, recent alivenes, ...
+  - secrecy of the key k shared between the tag and the reader
+
+  Whereas secrecy, aliveness and agreement on k+r1+r2 hold, the other properties does not hold. 
+
+  Comparison with existing models in the literature:
+  Jannik Dreier, Lucca Hirschi, Sasa Radomirovic, Ralf Sasse:
+  Automated Unbounded Verification of Stateful Cryptographic Protocols with Exclusive OR. CSF 2018: 359-373
+  In CSF'18, they do not consider corruption.
+*)
+
+
+
+
+free c: channel.
+
+(* set verboseRules = true. *)
+set simpEqAll = true.
+(* set verboseBase=true. *)
+
+fun h(bitstring): bitstring.
+fun rot(bitstring,bitstring): bitstring.
+fun lh(bitstring): bitstring.
+fun rh(bitstring): bitstring.
+
+(* k, r1, r2 *)
+event endR(bitstring,bitstring,bitstring).
+event startT(bitstring,bitstring,bitstring).
+event endT(bitstring,bitstring,bitstring).
+event startR(bitstring,bitstring,bitstring).
+
+(* k *)
+event key(bitstring).
+event dishonest(bitstring).
+
+(* agreement tag  on k, r1, r2 - false  *)
+query x1,x2,x3: bitstring; event(endR(x1,x2,x3)) ==> event(startT(x1,x2,x3)) || event(dishonest(x1)) .
+
+(* agreement tag  on k + r1+  r2 - true *)
+query x1,x2,x3,y1,y2,y3:bitstring; event(endR(x1,x2,x3)) ==> (event(startT(y1,y2,y3)) && xor(x1,xor(x2,x3)) = xor(y1,xor(y2,y3))) || event(dishonest(x1)). 
+
+(* recent aliveness tag - false *)
+query x1,x2,x3,x4: bitstring; event(endR(x1,x2,x3)) ==> event(startT(x1,x2,x4)) || event(dishonest(x1)).
+
+(* aliveness tag - true *)
+query x1,x2,x3,y2,y3: bitstring; event(endR(x1,x2,x3)) ==> event(startT(x1,y2,y3)) || event(dishonest(x1)).
+
+(* agreement reader  on k, r1, r2 - false *)
+query x1,x2,x3: bitstring; event(endT(x1,x2,x3)) ==> event(startR(x1,x2,x3)) || event(dishonest(x1)).
+
+(* agreement reader  on k + r1+  r2 - true *)
+query x1,x2,x3,y1,y2,y3:bitstring; event(endT(x1,x2,x3)) ==> (event(startR(y1,y2,y3)) && xor(x1,xor(x2,x3)) = xor(y1,xor(y2,y3))) || event(dishonest(x1)). 
+
+(* recent aliveness reader - false *)
+query x1,x2,x3,x4: bitstring; event(endT(x1,x2,x3)) ==> event(startR(x1,x2,x4)) || event(dishonest(x1)).
+
+(* aliveness reader - true*)
+query x1,x2,x3,y2,y3: bitstring; event(endT(x1,x2,x3)) ==> event(startR(x1,y2,y3)) || event(dishonest(x1)).
+
+(* secrecy *)
+query x1:bitstring;
+       (event(key(x1)) && attacker(x1)) ==> event(dishonest(x1)).
+
+
+
+let reader(k:bitstring,id:bitstring) = 
+    new r1:bitstring; 
+    out(c,r1); 
+    in(c,(x1:bitstring,x2:bitstring)); 
+    let hashR =h(xor(r1,xor(x1,k))) in 
+    if x2 = lh(xor(rot(id,hashR),hashR)) then 
+      event startR(k,r1,x1);
+      out(c,rh(xor(rot(id,hashR),hashR))); 
+      event endR(k,r1,x1).
+
+
+let tag(k:bitstring,id:bitstring) = 
+    in(c,y:bitstring); 
+    new r2:bitstring; 
+    let hashT = h(xor(y,xor(r2,k))) in 
+    event startT(k,y,r2);
+    out(c,(r2,lh(xor(rot(id,hashT),hashT)))); 
+    in(c,z:bitstring); 
+    if z = rh(xor(rot(id,hashT),hashT)) then 
+        event endT(k,y,r2).
+
+process
+   ! new k:bitstring; new id:bitstring; event key(k);
+     out(c,id);  (! reader(k,id) | ! tag(k,id) | event dishonest(k); out(c,k))

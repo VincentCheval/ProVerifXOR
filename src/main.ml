@@ -1358,8 +1358,8 @@ let add_value s =
         Param.additional_settings := (dummy_param, v') :: (!Param.additional_settings)
 
 let _ =
-  Printexc.record_backtrace true;
-  (* try *)
+  (* Printexc.record_backtrace true; *)
+  try
     Arg.parse
     [ "-test", Arg.Unit (fun () ->
         if !Param.tulafale == 0 then
@@ -1410,7 +1410,7 @@ let _ =
     ]
     anal_file ("Proverif " ^ Version.version ^ ". Cryptographic protocol verifier, by Bruno Blanchet, Vincent Cheval, and Marc Sylvestre");
     if !gc then Gc.print_stat stdout
-  (* with
+  with
   | InputError(mess, ext) ->
       Parsing_helper.display_input_error mess ext
-  | e -> Parsing_helper.internal_error (Printexc.to_string e) *)
+  | e -> Parsing_helper.internal_error (Printexc.to_string e)

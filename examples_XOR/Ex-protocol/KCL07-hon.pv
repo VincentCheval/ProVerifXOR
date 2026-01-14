@@ -1,0 +1,72 @@
+(* 
+  KCL07 RFID protocol model
+  Attacks on RFID Protocols
+  T. van Deursen and S. Radomirovic
+
+  Reader knows k and id 
+  Tag knows k and iD
+ 
+  R: fresh(r1)
+  R -> T: r1
+  T: fresh(r2)
+  T -> R: id + r2, r2 + h(r1,k)
+ 
+  Our model:
+  - we consider a model with many tags/readers, and an arbitrary number of sessions of each
+
+  Security properties:
+  - recent aliveness: when the reader receives the last message, he know that the tag id has played recently (presence of r1)
+  - agreement: when the reader receives the last message with id, r1, and r2 (chosen by the tag) then the tag has indeed sent these values.
+  - secrecy of the key k shared between the tag and the reader
+
+  Whereas secrecy and recent aliveness hold, agreement does not hold as the reader a man in the middle attacker can simply 
+  pick a random r3 and adds it on both side of <id + r2, r2 + h(r1,k)>. 
+  This message will be accepted by the reader who will deduce that the nonce received is r2+r3.
+
+  Comparison with existing models in the literature:
+  Jannik Dreier, Lucca Hirschi, Sasa Radomirovic, Ralf Sasse:
+  Automated Unbounded Verification of Stateful Cryptographic Protocols with Exclusive OR. CSF 2018: 359-373
+  Their model considers one tag only. Moreover, they simplify their model: the xored the two components of the pair received by the reader. 
+*)
+
+
+free c: channel.
+
+fun h(bitstring,bitstring): bitstring.
+
+(* id, r1, r2 *)
+event endR(bitstring,bitstring,bitstring).
+event startT(bitstring,bitstring,bitstring).
+
+(* agreement - this property does not hold *)
+
+query x1: bitstring, x2: bitstring, x3: bitstring;
+          event(endR(x1,x2,x3)) ==> event(startT(x1,x2,x3)).
+
+(* aliveness - true *)
+query x1: bitstring, x2: bitstring, x3: bitstring, x4:bitstring;
+          event(endR(x1,x2,x3)) ==> event(startT(x1,x2,x4)).
+
+(* secrecy - true *)
+query attacker(new k).
+
+let reader(k:bitstring,id:bitstring) = 
+    new r1:bitstring; 
+    out(c,r1); 
+    in(c,(x1:bitstring,x2:bitstring)); 
+    if xor(x1,x2) = xor(id,h(r1,k)) then 
+    event endR(id, r1, xor(x1,id)).
+
+
+let tag(k:bitstring,id:bitstring) = 
+    in(c,y:bitstring); 
+    new r2:bitstring; 
+    event startT(id, y, r2);
+    out(c,(xor(id,r2),xor(r2,h(y,k)))).
+
+process
+   ! new k:bitstring; 
+     new id:bitstring; 
+     out(c,id); 
+   (! reader(k,id) | ! tag(k,id))
+

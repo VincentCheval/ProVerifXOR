@@ -1,0 +1,165 @@
+(* API IBM CCA
+
+We consider the same protocol as the one studied in
+Ralf Küsters, Tomasz Truderung:
+Reducing Protocol Analysis with XOR to the XOR-Free Case in the Horn Theory Based Approach. J. Autom. Reason. 46(3-4): 325-352 (2011)
+
+
+Encipher: 
+x, senc(k, KM + DATA) --> senc(x,k)
+
+Decipher
+senc(x,k), senc(k, KM + DATA) --> x
+
+Key Export
+senc(k, KM+type), type, senc(kek, KM+EXP)--> senc(k, kek+type)
+
+Key Import
+senc(k, kek+type), type, senc(kek,KM+IMP) --> senc(k,KM+type)
+
+KeyPartImp First
+k1, type --> senc(k1,KM+KP+type)
+
+KeyPartImp Middle
+k2, senc(x,KM+KP+type), type -->senc(x+k2,KM+KP+type)
+
+KeyPartImp Last
+k3, senc(y,KM+KP+type), type --> senc(y+k3,KM+type)
+
+Key Translate
+senc(k,kek1+type), type, senc(kek1,KM+IMP), senc(kek2,KM+EXP) --> senc(k, kek2+type)
+
+KM denotes a constant, type is a constant that ranges over {DATA, IMP, EXP, PIN} and all other symbols are variables.
+
+
+kek = k1+k2+k3
+senc(pdk,kek + PIN)
+k3
+
+Security property: secrecy of pdk
+An attack exists: pdf is derivable.
+
+Note that we compensate the absence of the keyPartImpMiddle in our model by two extra rules, as it was done in the paper mentionned above.
+*)
+
+
+
+free c: channel.
+
+set simpEqAll = true.
+
+(* const DATA:bitstring. *)
+const IMP:bitstring.
+const EXP:bitstring.
+const PIN:bitstring.
+const KP:bitstring.
+
+free pdk:bitstring [private].
+free KM:bitstring [private].
+
+free k1:bitstring [private].
+free k2:bitstring [private].
+free k3:bitstring [private].
+
+fun senc(bitstring,bitstring): bitstring.
+reduc forall x: bitstring, y: bitstring; sdec(senc(x,y),y) = x.
+
+
+query attacker(pdk).
+
+(* Encipher:  x, senc(k, KM + DATA) --> senc(x,k) *)
+let encipher = 
+    in(c,x:bitstring);
+    in(c,y:bitstring);
+    let k = sdec(y,KM) in
+    out(c,senc(x,k)).
+
+(* Decipher: senc(x,k), senc(k, KM + DATA) --> x *)
+let decipher = 
+    in(c,x:bitstring); in(c,y:bitstring);
+    let k = sdec(y,KM) in
+   out(c,sdec(x,k)).
+
+(* Key Export: senc(k, KM+type), type, senc(kek, KM+EXP)--> senc(k,kek+type) *)
+let keyExport =
+    in(c,x:bitstring);
+    in(c,xtype:bitstring);
+    if (xtype = zero || xtype = IMP || xtype = EXP || xtype = PIN) then
+    in(c,y:bitstring);
+    let kek = sdec(y,xor(KM,EXP)) in
+    let k = sdec(x,xor(KM,xtype)) in
+   out(c,senc(k,xor(kek,xtype))).
+
+
+(* Key Import: senc(k, kek+type), type, senc(kek,KM+IMP) --> senc(k,KM+type) *)
+let keyImport = 
+   in(c,x:bitstring);  
+   in(c,xtype:bitstring);
+   if (xtype = zero || xtype = IMP || xtype = EXP || xtype = PIN) then
+   in(c,y:bitstring);
+   let kek = sdec(y,xor(KM,IMP)) in
+   let k = sdec(x,xor(kek,xtype)) in
+   out(c,senc(k,xor(KM,xtype))).
+
+
+(* KeyPartImp First: k1, type --> senc(k1,KM+KP+type) *)
+let keyPartImpFirst = 
+    in(c,x:bitstring);
+    in(c,xtype:bitstring);
+    if (xtype = zero || xtype = IMP || xtype = EXP || xtype = PIN) then
+    out(c,senc(x,xor(KM,xor(KP,xtype)))).
+
+(* KeyPartImp Middle: k2, senc(x,KM+KP+type), type -->senc(x+k2,KM+KP+type) *)
+(*let keyPartImpMiddle = 
+    in(c,k2:bitstring);
+    in(c,y:bitstring);
+    in(c,xtype:bitstring);
+    if (xtype = zero || xtype = IMP || xtype = EXP || xtype = PIN) then
+    let x = sdec(y,xor(KM,xor(KP,xtype))) in
+    out(c,senc(xor(x,k2),xor(KM,xor(KP,xtype)))).
+*)
+
+(* KeyPartImp Last: k3, senc(y,KM+KP+type), type --> senc(y+k3,KM+type) *)
+(*let keyPartImpLast = 
+   in(c,k3:bitstring);
+   in(c,x:bitstring);
+   in(c,xtype:bitstring);
+   if (xtype = zero || xtype = IMP || xtype = EXP || xtype = PIN) then
+   let y = sdec(x,xor(KM,xor(KP,xtype))) in
+   out(c,senc(xor(y,k3),xor(KM,xtype))).
+*)
+
+(* Key Translate: senc(k,kek1+type), type, senc(kek1,KM+IMP), senc(kek2,KM+EXP) --> senc(k, kek2+type)*)
+let keyTranslate = 
+   in(c,x:bitstring);
+   in(c,xtype:bitstring);
+  if (xtype = zero || xtype = IMP || xtype = EXP || xtype = PIN) then
+   in(c,y:bitstring);
+   in(c,z:bitstring);
+   let kek1 = sdec(y,xor(KM,IMP)) in
+   let kek2 = sdec(z,xor(KM,EXP)) in
+   let k = sdec(x,xor(kek1,xtype)) in
+   out(c,senc(k,xor(kek2,xtype))).
+
+(* These two extra rules are the same as those added in the analysis performed in the paper 
+   mentionned above in order to compensate the absence of the rule keyPartImpMiddle and keyPartImpLast *)
+
+let extra1 = 
+   in(c,x:bitstring);
+   in(c,xtype:bitstring);
+   if (xtype = zero || xtype = IMP || xtype = EXP || xtype = PIN) then
+   in(c,y:bitstring); 
+   if y = xor(KM,xor(KP,xtype)) then
+   out(c,senc(x,xor(KM,xtype))).
+
+let extra2 = 
+   in(c,x:bitstring);
+    out(c,senc(xor(x,xor(k1,k2)),xor(KM,IMP))).
+
+process 
+ (
+      out(c,k3) | 
+      let kek = xor(k1,xor(k2,k3)) in out(c,senc(pdk, xor(kek,PIN))); out(c,senc(xor(k1,k2),xor(KM,xor(KP,IMP)))) |
+ ! encipher | !decipher | !keyExport | !keyImport | !keyPartImpFirst  | !extra1 | !extra2 | !keyTranslate )
+
+

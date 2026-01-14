@@ -1,0 +1,27 @@
+(* CR protocol *)
+(* I -> R: na
+   R -> I: <h(na + nb +k ), nb>
+*)
+
+free c: channel.
+
+type host.
+type key.
+type pkey.
+type skey.
+type spkey.
+type sskey.
+
+(* set verboseRules = true. *)
+
+fun hash(bitstring): bitstring.
+
+
+free k:bitstring [private].
+free s:bitstring [private].
+free na:bitstring [private].
+
+query attacker(s).
+
+process
+  out(c,na); in(c, (x1:bitstring,x2:bitstring)); if hash(xor(xor(na,k),x2)) = x1 then  out(c,s)

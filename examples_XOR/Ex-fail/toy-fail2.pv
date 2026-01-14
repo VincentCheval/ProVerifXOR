@@ -1,0 +1,11 @@
+
+free c: channel.
+
+fun hash(bitstring): bitstring.
+
+free s:bitstring [private].
+
+query attacker(s).
+
+process
+  !in(c,x:bitstring);  new k:bitstring; out(c, xor(x,k))

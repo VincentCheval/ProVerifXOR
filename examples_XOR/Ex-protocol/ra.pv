@@ -1,0 +1,92 @@
+(* 
+
+RA denotes a group protocol for key distribution. It has been studied in the following paper:
+Ralf Küsters, Tomasz Truderung:
+Reducing Protocol Analysis with XOR to the XOR-Free Case in the Horn Theory Based Approach. J. Autom. Reason. 46(3-4): 325-352 (2011)
+
+We model the exact same scenario but we use the applied pi calculus as input language whereas they used Horn clauses.
+
+A known attack is possible on this protocol allowing the attacker to learn K(a,b).
+
+A description of the protocol is available here together with the attack:
+https://lsv.ens-paris-saclay.fr/Software/spore/bull.html
+
+
+A, B, C, S :  	principal
+Kab, Kbc :  	fresh symkey
+Na, Nb, Nc :  	fresh number
+Kas, Kbs, Kcs :  	symkey
+h :  	message, symkey -> message
+
+A computes Xa = h((A,B,Na),Kas), (A,B,Na)
+1.  A -> B: Xa
+
+B computes Xb = h((B,C,Nb,Xa),Kbs), (B,C,Nb,Xa)
+2.  B -> C: Xb
+
+C computes Xc = h((C,S,Nc,Xb),Kcs), (C,S,Nc,Xb)
+3.  C -> S: Xc
+
+4.  S -> C: A, B, Kab xor h(Na,Kas), {A,B,Na}Kab,
+ 	    B, A, Kab xor h(Nb,Kbs), {B,A,Nb}Kab,
+ 	    B, C, Kbc xor h(Nb,Kbs), {B,C,Nb}Kbc,
+ 	 	 	 	 	C, B, Kbc xor h(Nc,Kcs), {C,B,Nc}Kbc
+5.  C -> B : A, B, Kab xor h(Na,Kas), {A,B,Na}Kab,
+ 	     B, A, Kab xor h(Nb,Kbs), {B,A,Nb}Kab,
+ 	     B, C, Kbc xor h(Nb,Kbs), {B,C,Nb}Kbc
+6.  B -> A : A, B, Kab xor h(Na,Kas), {A,B,Na}Kab
+
+This protocol is subject to an attack that can be mounted by a dishonest participant. Assuming that C is a malicious agent, 
+he can intercept Kab xor h(Nb,Kbs) and Kbc xor h(Nb,Kbs) sent by S at step 4, and since C knows the session key Kbc, 
+he can compute Kbc xor Kab xor h(Nb,Kbs) xor Kbc xor h(Nb,Kbs). Since this term is actually equal to Kab, 
+the agent C learns a session key that should be shared only by A and B.
+
+*)
+
+
+
+free ch: channel.
+
+const cend: bitstring.
+
+fun K(bitstring,bitstring):bitstring [private].
+fun sks(bitstring): bitstring [private].
+fun senc(bitstring,bitstring): bitstring.
+fun hkey(bitstring,bitstring):bitstring.
+reduc forall x: bitstring, y: bitstring; sdec(senc(x,y),y) = x.
+
+free a:bitstring.
+free b:bitstring.
+free c:bitstring.
+free s:bitstring.
+
+free sec:bitstring [private].
+
+query attacker(K(a,b)).
+
+let requestInit(x1:bitstring,x2:bitstring) =    
+   new n:bitstring;
+   out(ch, (hkey((x1,x2,n,cend),sks(x1)), (x1,x2,n,cend))).
+
+let request(x1:bitstring,x2:bitstring)=
+   in(ch,(x:bitstring,(x0:bitstring,=x1,x3:bitstring,x4:bitstring)));
+   new n:bitstring;
+   let m = (x1,x2,n,x) in
+   out(ch, (hkey(m,sks(x1)), m)).
+
+let reply =
+   in(ch,(m1:bitstring,(x1:bitstring,x2:bitstring,x3:bitstring, (m2:bitstring, (y1:bitstring,y2:bitstring,y3:bitstring,y4:bitstring))))) [precise];
+   if m1 = hkey((x1,x2,x3,(m2, (y1,y2,y3,y4))),sks(x1)) then
+   if m2= hkey((y1,y2,y3,y4),sks(y1)) then
+   if x1 = y2 then 
+   out(ch, (x1,x2,xor(K(x1,x2),hkey(x3,sks(x1))), senc((x1,x2,x3),K(x1,x2)))) ;
+   out(ch, (y2,y1,xor(K(y1,y2),hkey(x3,sks(y2))), senc((y2,y1,x3),K(y1,y2)))).
+
+let replyEnd =
+  in(ch,(m1:bitstring,(x1:bitstring,x2:bitstring,x3:bitstring,=cend)));
+  if m1 = hkey((x1,x2,x3,cend),sks(x1)) then 
+  out(ch,(x1,x2,xor(K(x1,x2),hkey(x3,sks(x1))), senc((x1,x2,x3),K(x1,x2)))).
+
+process
+    out(ch,sks(c)); (requestInit(a,b) | request(b,c) | request(c,s) | reply | reply | replyEnd )
+

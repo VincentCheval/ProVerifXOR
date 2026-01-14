@@ -1,0 +1,100 @@
+(* 
+  LAK06 RFID protocol model
+  Attacks on RFID Protocols
+  T. van Deursen and S. Radomirovic
+
+  Reader knows k 
+  Tag knows k 
+
+  R -> T: r0
+  T -> R: r1, h(r0 XOR r1 XOR k) 
+  R -> R: h(h(r0 XOR r1 XOR k) XOR k XOR r0)
+ 
+
+  Our model:
+  - we consider a model with many tags/readers, and an arbitrary number of sessions of each
+  - to avoid termination issue during saturation, we use two different hash functions h1 and h2
+  - we model dishonest participants
+
+  Security properties:
+  - recent aliveness: when the reader receives the last message, he know that the tag id has played recently (presence of r0)
+  - agreement: when the reader receives the last message with id, r0, and r1 (chosen by the tag) then the tag has indeed sent these values.
+  - secrecy of the key k shared between the tag and the reader
+
+  Whereas secrecy of the key and agreement holds for the tag, only aliveness holds from the point of view of the reader.
+  Execution time: around 1 min.
+
+  Comparison with existing models in the literature:
+  Jannik Dreier, Lucca Hirschi, Sasa Radomirovic, Ralf Sasse:
+  Automated Unbounded Verification of Stateful Cryptographic Protocols with Exclusive OR. CSF 2018: 359-373
+  The authors they that their model is heavily restricted, allowing only one pair of Reader/Tag and
+  only one single run by the reader. We consider here a more general model.
+*)
+
+
+free c: channel.
+
+fun h(bitstring): bitstring.
+
+set nounifIgnoreAFewTimes = auto.
+set nounifIgnoreNtimes = 2.
+
+(* k, r0, r1 *)
+event endR(bitstring,bitstring,bitstring).
+event startT(bitstring,bitstring,bitstring).
+event endT(bitstring,bitstring,bitstring).
+event startR(bitstring,bitstring,bitstring).
+
+event key(bitstring).
+event dishonest(bitstring).
+
+(* Agreement - this property does not hold *)
+
+query x1: bitstring, x2: bitstring, x3: bitstring;
+          event(endR(x1,x2,x3)) ==> event(startT(x1,x2,x3)) || event(dishonest(x1)).
+
+(* recent aliveness - this property does not hold *)
+query x1: bitstring, x2: bitstring, x3: bitstring, x4:bitstring;
+          event(endR(x1,x2,x3)) ==> event(startT(x1,x2,x4))|| event(dishonest(x1)).
+
+(* Aliveness is ok and even Aliveness with a certain relationship between the exchanged data *)
+
+query x1: bitstring, x2: bitstring, x3: bitstring, x4:bitstring, x5:bitstring;
+          event(endR(x1,x2,x3)) ==> (event(startT(x1,x4,x5)) && xor(x2,x3) = xor(x4,x5)) || event (dishonest(x1)).
+
+
+(* Injective agreement for the tag holds *)
+query x1: bitstring, x2: bitstring, x3: bitstring;
+          inj-event(endT(x1,x2,x3)) ==> inj-event(startR(x1,x2,x3)) || event(dishonest(x1)).
+
+
+(* secrecy *)
+query x1:bitstring; (event(key(x1)) && attacker(x1)) ==> event(dishonest(x1)).
+
+
+
+
+let reader(k:bitstring) = 
+    new r0:bitstring; 
+    out(c,r0); 
+    in(c,(x1:bitstring,x2:bitstring)) [precise]; 
+    if x2 = h(xor(r0, xor(x1,k))) then 
+    event startR(k, r0, x1);
+    out(c,h(xor(x2, xor(k,r0)))); 
+    event endR(k, r0, x1).
+
+
+let tag(k:bitstring) = 
+    in(c,y:bitstring); 
+    new r1:bitstring; 
+    let ht = h(xor(y,xor(r1,k))) in
+    event startT(k,y,r1);
+    out(c,(r1, ht));
+    in(c,z:bitstring);
+    if z = h(xor(ht, xor(k, y))) then 
+    event endT(k, y, r1).
+
+process
+   ! new k:bitstring; event key(k);
+   (!reader(k) |  !tag(k) | event dishonest(k); out(c,k))
+

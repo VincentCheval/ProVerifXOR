@@ -1,0 +1,81 @@
+(* 
+ MW
+
+[E] David Molnar and David A. Wagner. Privacy and security in library
+RFID: issues, practices, and architectures. In Vijayalakshmi Atluri,
+Birgit Pfitzmann, and Patrick D. McDaniel, editors, Proceedings of the
+11th ACM Conference on Computer and Communications Security, CCS
+2004, Washington, DC, USA, October 25-29, 2004, pages 210–219.
+ACM, 2004.
+
+R --> T: nr
+T --> R: nt, id + H(<c0, nr, nt>,k)
+R --> T: id + H(<c1, nr, nt>,k)
+ 
+  Our model:
+  - we consider a model with many tags/readers, and an arbitrary number of sessions of each
+  - we model dishonest participants
+
+  Security properties:
+  - agreement on both sides
+  - secrecy of the key k shared between the tag and the reader
+
+  All these properties hold.
+
+*)
+
+
+free c: channel.
+
+fun h(bitstring,bitstring): bitstring.
+const tag0, tag1: bitstring.
+
+(* id, k, nr, nt *)
+event endR(bitstring,bitstring,bitstring,bitstring).
+event startT(bitstring,bitstring,bitstring,bitstring).
+event endT(bitstring,bitstring,bitstring,bitstring).
+event startR(bitstring,bitstring,bitstring,bitstring).
+
+(* id *)
+event dishonest(bitstring).
+(* k, id *)
+event key(bitstring,bitstring).
+
+
+(* injective agreement for the reader - this property holds *)
+query x1: bitstring, x2: bitstring, x3: bitstring, x4:bitstring;
+          inj-event(endR(x1,x2,x3,x4)) ==> inj-event(startT(x1,x2,x3,x4)) || event(dishonest(x1)).
+
+(* agreement for the tag - this property holds *)
+query x1: bitstring, x2: bitstring, x3: bitstring, x4:bitstring;
+          inj-event(endT(x1,x2,x3,x4)) ==> inj-event(startR(x1,x2,x3,x4)) || event(dishonest(x1)).
+
+(* secrecy - this property holds *)
+query x1:bitstring, x2:bitstring;
+       (event(key(x1,x2)) && attacker(x1)) ==> event(dishonest(x2)).
+
+
+
+let reader(id:bitstring,k:bitstring) = 
+    new nr:bitstring; 
+    out(c,nr); 
+    in(c,(x1:bitstring,x2:bitstring)); 
+    if xor(x2,id) = h((tag0,nr,x1),k) then
+    event startR(id, k, nr, x1);
+    out(c,xor(id,h((tag1,nr,x1),k)));
+    event endR(id, k, nr, x1).
+
+
+let tag(id:bitstring,k:bitstring) = 
+    in(c,y:bitstring); 
+    new nt:bitstring; 
+    let ht = h((tag0,y,nt),k) in
+    event startT(id, k,y,nt);
+    out(c,(nt, xor(id,ht)));
+    in(c,z:bitstring);
+    if xor(id,z) = h((tag1,y,nt),k) then
+    event endT(id, k, y, nt).
+
+process
+   ! new k:bitstring; new id: bitstring;  event key(k,id); out(c,id);
+   (!reader(id, k) |  !tag(id, k) | event dishonest(id); out(c,k))

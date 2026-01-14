@@ -1,0 +1,20 @@
+(* CR protocol *)
+(* I -> R: h(na + nb,k)
+   R -> I: s
+*)
+
+free c: channel.
+
+fun hash(bitstring,bitstring): bitstring.
+
+free k:bitstring [private].
+free s:bitstring [private].
+
+free na:bitstring [private].
+free nb:bitstring [private].
+
+query attacker(s).
+
+process
+  out(c,hash(xor(na,nb),k));out(c,na); out(c,nb)
+ | in(c,x:bitstring); in(c,z:bitstring); if x = hash(z,k) then out(c,s)

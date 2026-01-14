@@ -1,0 +1,62 @@
+(* 
+
+
+RA denotes a group protocol for key distribution. It has been studied in the following paper:
+Ralf Küsters, Tomasz Truderung:
+Reducing Protocol Analysis with XOR to the XOR-Free Case in the Horn Theory Based Approach. J. Autom. Reason. 46(3-4): 325-352 (2011)
+
+As we have seen (see file ra.pv), an  attack is possible on this protocol allowing the attacker to learn K(a,b). In the paper mentioned above, 
+they proposed a fix that we analyse here.
+
+Roughly, the message Kab + h(Na, Kas) sent by the key distribution server to A is replaced by
+Kab + h(⟨Na, B⟩, Kas⟩, and the same applies for the other agents.
+
+*)
+
+
+
+free ch: channel.
+
+const cend: bitstring.
+
+fun K(bitstring,bitstring):bitstring [private].
+fun sks(bitstring): bitstring [private].
+fun senc(bitstring,bitstring): bitstring.
+fun hkey(bitstring,bitstring):bitstring.
+reduc forall x: bitstring, y: bitstring; sdec(senc(x,y),y) = x.
+
+free a:bitstring.
+free b:bitstring.
+free c:bitstring.
+free s:bitstring.
+
+free sec:bitstring [private].
+
+query attacker(K(a,b)).
+
+let requestInit(x1:bitstring,x2:bitstring) =    
+   new n:bitstring;
+   out(ch, (hkey((x1,x2,n,cend),sks(x1)), (x1,x2,n,cend))).
+
+let request(x1:bitstring,x2:bitstring)=
+   in(ch,(x:bitstring,(x0:bitstring,=x1,x3:bitstring,x4:bitstring)));
+   new n:bitstring;
+   let m = (x1,x2,n,x) in
+   out(ch, (hkey(m,sks(x1)), m)).
+
+let reply =
+   in(ch,(m1:bitstring,(x1:bitstring,x2:bitstring,x3:bitstring, (m2:bitstring, (y1:bitstring,y2:bitstring,y3:bitstring,y4:bitstring)))));
+   if m1 = hkey((x1,x2,x3,(m2, (y1,y2,y3,y4))),sks(x1)) then
+   if m2= hkey((y1,y2,y3,y4),sks(y1)) then
+   if x1 = y2 then 
+   out(ch, (x1,x2,xor(K(x1,x2),hkey((x3,x2),sks(x1))), senc((x1,x2,x3),K(x1,x2)))) ;
+   out(ch, (y2,y1,xor(K(y1,y2),hkey((x3,y1),sks(y2))), senc((y2,y1,x3),K(y1,y2)))).
+
+let replyEnd =
+  in(ch,(m1:bitstring,(x1:bitstring,x2:bitstring,x3:bitstring,=cend)));
+  if m1 = hkey((x1,x2,x3,cend),sks(x1)) then 
+  out(ch,(x1,x2,xor(K(x1,x2),hkey((x3,x2),sks(x1))), senc((x1,x2,x3),K(x1,x2)))).
+
+process
+    out(ch,sks(c)); (requestInit(a,b) | request(b,c) | request(c,s) | reply | reply | replyEnd )
+

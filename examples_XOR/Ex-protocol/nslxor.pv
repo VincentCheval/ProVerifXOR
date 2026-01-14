@@ -1,0 +1,89 @@
+(* Needham Schroeder with xor 
+vulnerable to the Lowe man-in-the-middle attack
+
+I -> R: aenc(<1, ni, I>, pk(R))
+R -> I: aenc(<2, ni ,nr + R>, pk(I))
+I -> R: aenc(<3, nr>, pk(R))
+
+
+This protocol has been proposed in a paper published at LICS 2003 by Chevalier et al.
+
+Security properties: we consider secrecy of the nonces Ni and Nr, as well as authentication on both sides.
+Secrecy of Nr does not hold, and authentication does not hold one one side. The attack is similar to the one of Lowe.
+
+Comparison with existing models in the literature:
+  Jannik Dreier, Lucca Hirschi, Sasa Radomirovic, Ralf Sasse:
+  Automated Unbounded Verification of Stateful Cryptographic Protocols with Exclusive OR. CSF 2018: 359-373
+In CSF'18, their model included TAG that we reproduced here.
+*)
+
+
+
+free c: channel.
+
+const tag1:bitstring.
+const tag2:bitstring.
+const tag3:bitstring.
+const skc:bitstring.
+
+fun aenc(bitstring,bitstring): bitstring.
+fun pk(bitstring):bitstring.
+reduc forall x: bitstring, y: bitstring; adec(aenc(x,pk(y)),y) = x.
+
+
+free ska: bitstring [private].
+free skb: bitstring [private].
+
+
+(* pkey init, pkey resp, na, nb *)
+event startR(bitstring,bitstring,bitstring,bitstring).
+event endR(bitstring,bitstring,bitstring,bitstring).
+event startI(bitstring,bitstring,bitstring,bitstring).
+event endI(bitstring,bitstring,bitstring,bitstring).
+
+(* pk sk *)
+event honest(bitstring).
+
+(* pk init, pk resp, nonce *)
+event nonceI(bitstring, bitstring, bitstring).
+event nonceR(bitstring, bitstring, bitstring).
+
+(* These two properties do not hold *)
+query x1,x2,x: bitstring; event(nonceR(x1,x2,x)) && event(honest(x1)) && event(honest(x2)) && attacker(x) ==> false. 
+
+query x1: bitstring, x2: bitstring, x3: bitstring, x4: bitstring;
+          event(endR(x1,x2,x3,x4)) && event(honest(x1)) && event(honest(x2)) ==> event(startI(x1,x2,x3,x4)). 
+
+(* These properties hold *)
+query x1,x2,x: bitstring; event(nonceI(x1,x2,x)) && event(honest(x1)) && event(honest(x2)) && attacker(x) ==> false.
+
+query x1: bitstring, x2: bitstring, x3: bitstring, x4: bitstring;
+          inj-event(endI(x1,x2,x3,x4)) && event(honest(x1)) && event(honest(x2)) ==> inj-event(startR(x1,x2,x3,x4)).
+
+let initiator(ski:bitstring,pkr:bitstring) = 
+    new ni:bitstring; 
+    event nonceI(pk(ski),pkr,ni);
+    out(c,aenc((tag1,ni,pk(ski)),pkr)); 
+    in(c,x:bitstring);
+    let (=tag2, =ni, x3:bitstring) = adec(x,ski) in
+    event startI(pk(ski),pkr,ni, xor(x3,pkr));
+    out(c,aenc((tag3,xor(x3,pkr)),pkr));
+    event endI(pk(ski),pkr,ni,xor(x3,pkr)).
+
+
+let responder(skr:bitstring,pki:bitstring) = 
+    in(c,y:bitstring); 
+    let (=tag1, yni:bitstring, =pki) = adec(y,skr) in
+    new nr:bitstring;
+    event nonceR(pki, pk(skr), nr);
+    event startR(pki,pk(skr),yni,nr);
+    out(c,aenc((tag2, yni, xor(nr, pk(skr))), pki));
+    in(c,z:bitstring);
+    if z = aenc((tag3,nr), pk(skr)) then 
+    event endR(pki,pk(skr),yni,nr).
+
+process
+     event honest(pk(ska)); event honest(pk(skb)); out(c,pk(ska)); out(c,pk(skb));  
+     ( !initiator(ska,pk(skb)) | !initiator(ska,pk(skc)) | !initiator(skb,pk(ska)) | !initiator(skb,pk(skc)) 
+     | !responder(skb,pk(ska)) | !responder(skb,pk(skc)) |  !responder(ska,pk(skb)) | !responder(ska,pk(skc)))
+
