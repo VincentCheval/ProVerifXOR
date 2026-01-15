@@ -33,7 +33,10 @@ Download the repository (or clone it) of ProVerif. This will create a directory 
 	cd proverifXOR
 	./build
 
-This will create the executable proverif.
+This will create the executable proverif. It is possible that right after downloading the folder, executing `./build` yields a `permission denied: ./build`. In such a case run:
+
+	chmod +x build
+	./build
 
 To remove the installed files:
 
