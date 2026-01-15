@@ -1,8 +1,8 @@
 (* A variant of Needham Schroeder with xor 
   
-I -> R: aenc(<1, ni, I>, pk(R))
-R -> I: aenc(<2, nr , h(ni,nr) + R>, pk(I))
-I -> R: aenc(<3, nr>, pk(R))
+I -> R: aenc(<ni, I>, pk(R))
+R -> I: aenc(<nr , h(ni,nr) + R>, pk(I))
+I -> R: aenc(<nr>, pk(R))
 
 
 This protocol has been studied in the following paper:
