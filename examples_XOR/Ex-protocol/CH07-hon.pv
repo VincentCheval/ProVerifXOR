@@ -1,3 +1,14 @@
+(*************************************************************
+*                                                           *
+* XOR EXTENSION                                             *
+*                                                           *
+* Vincent Cheval and Stéphanie Delaune                      *
+*                                                           *
+* Copyright (C) INRIA, CNRS 2000-2026                       *
+* Copytight (C) University of Oxford, 2026                  *
+*                                                           *
+*************************************************************)
+
 (* 
   CH07 RFID protocol model based on 
   "Attacks on RFID protocols" v1.1 from Aug 6, 2009, by Ton van Deursen and Sasa Radomirovic

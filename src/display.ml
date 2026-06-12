@@ -9,14 +9,15 @@
  *************************************************************)
 
 (*************************************************************
-
-XOR EXTENSION
-
-Anonymously submitted for CCS 2026
-Anonymous authors
-
+*                                                           *
+* XOR EXTENSION                                             *
+*                                                           *
+* Vincent Cheval and Stéphanie Delaune                      *
+*                                                           *
+* Copyright (C) INRIA, CNRS 2000-2026                       *
+* Copytight (C) University of Oxford, 2026                  *
+*                                                           *
 *************************************************************)
-
 
 (*
 
@@ -35,6 +36,7 @@ Anonymous authors
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 *)
+
 open Types
 open Pitypes
 open Stringmap
@@ -1566,8 +1568,18 @@ module LangDisp = functor (Lang : LangSig) ->
 
     let display_constraints c = Std.constraints c
 
+    let display_variant = function
+      | Protocol -> ()
+      | Variant -> print_string "[variant XOR] "
+      | AnnotatedVariant (t1,t2) -> 
+          print_string "[variant XOR: ";
+          display_term t1;
+          print_string " - ";
+          display_term t2;
+          print_string "] "
+
     let display_rule_nonewline ((hyp, concl, hist, constra, variant):marked_reduction) =
-      if variant then print_string "[variant XOR] ";
+      display_variant variant;
       display_constraints constra;
       if  (not (Terms.is_true_constraints constra)) && (hyp != []) then
         display_connective (Lang.and_connective());

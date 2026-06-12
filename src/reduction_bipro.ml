@@ -9,14 +9,15 @@
  *************************************************************)
 
 (*************************************************************
-
-XOR EXTENSION
-
-Anonymously submitted for CCS 2026
-Anonymous authors
-
+*                                                           *
+* XOR EXTENSION                                             *
+*                                                           *
+* Vincent Cheval and Stéphanie Delaune                      *
+*                                                           *
+* Copyright (C) INRIA, CNRS 2000-2026                       *
+* Copytight (C) University of Oxford, 2026                  *
+*                                                           *
 *************************************************************)
-
 
 (*
 
@@ -217,7 +218,7 @@ let display_rule (n, sons, hsl, nl, concl) =
   print_string ("Rule " ^ (string_of_int n) ^ ": ");
   display_tag hsl nl;
   print_string "  ";
-  Display.Text.display_rule (List.map (fun t -> copy_fact2 t, NoMarking) sons, copy_fact2 concl, Empty concl, Terms.true_constraints, false);
+  Display.Text.display_rule (List.map (fun t -> copy_fact2 t, NoMarking) sons, copy_fact2 concl, Empty concl, Terms.true_constraints, Protocol);
   Display.Text.newline()
 
 (* Display the trace *)

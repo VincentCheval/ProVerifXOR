@@ -9,14 +9,15 @@
  *************************************************************)
 
 (*************************************************************
-
-XOR EXTENSION
-
-Anonymously submitted for CCS 2026
-Anonymous authors
-
+*                                                           *
+* XOR EXTENSION                                             *
+*                                                           *
+* Vincent Cheval and Stéphanie Delaune                      *
+*                                                           *
+* Copyright (C) INRIA, CNRS 2000-2026                       *
+* Copytight (C) University of Oxford, 2026                  *
+*                                                           *
 *************************************************************)
-
 
 (*
 
@@ -35,6 +36,7 @@ Anonymous authors
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 *)
+
 (* This modules contains basic functions to manipulate terms *)
 
 open Types
@@ -271,6 +273,7 @@ val copy_term2 : term -> term
 val copy_fact2 : fact -> fact
 val copy_marked_fact2 : fact * marking -> fact * marking
 val copy_constra2 : constraints -> constraints
+val copy_variant2 : variant -> variant
 val copy_rule2 : marked_reduction -> marked_reduction
 val copy_rule2_no_cleanup : marked_reduction -> marked_reduction
 val copy_ordered_rule2 : ordered_reduction -> ordered_reduction

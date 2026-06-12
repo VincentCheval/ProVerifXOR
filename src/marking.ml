@@ -9,14 +9,15 @@
  *************************************************************)
 
 (*************************************************************
-
-XOR EXTENSION
-
-Anonymously submitted for CCS 2026
-Anonymous authors
-
+*                                                           *
+* XOR EXTENSION                                             *
+*                                                           *
+* Vincent Cheval and Stéphanie Delaune                      *
+*                                                           *
+* Copyright (C) INRIA, CNRS 2000-2026                       *
+* Copytight (C) University of Oxford, 2026                  *
+*                                                           *
 *************************************************************)
-
 
 (*
 
@@ -35,10 +36,11 @@ Anonymous authors
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 *)
+
 open Types
 
 let is_ac_constructor_clause ((hyp,concl,_,cons,variant):marked_reduction) = 
-  if variant && Terms.is_true_constraints cons
+  if variant <> Protocol && Terms.is_true_constraints cons
   then 
     match hyp,concl with
     | [(Pred({p_info = Attacker _; _} as p1,[Var x]),NoMarking);(Pred(p2,[Var y]),NoMarking)], 

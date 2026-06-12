@@ -9,12 +9,14 @@
  *************************************************************)
 
 (*************************************************************
-
-XOR EXTENSION
-
-Anonymously submitted for CCS 2026
-Anonymous authors
-
+*                                                           *
+* XOR EXTENSION                                             *
+*                                                           *
+* Vincent Cheval and Stéphanie Delaune                      *
+*                                                           *
+* Copyright (C) INRIA, CNRS 2000-2026                       *
+* Copytight (C) University of Oxford, 2026                  *
+*                                                           *
 *************************************************************)
 
 
@@ -140,7 +142,7 @@ let add_rule_follow f_next hyp concl constra tags =
         begin
           try
             TermsEq.simplify_constraints (fun constra1 ->
-              add_and_follow f_next (hyp_mk'',concl'',Rule (!nrule, tags'', hyp_mk'', concl'', constra1),constra1, false)
+              add_and_follow f_next (hyp_mk'',concl'',Rule (!nrule, tags'', hyp_mk'', concl'', constra1),constra1, Protocol)
             ) (fun constra1 ->
               let hyp1 = List.map (fun (f,mk) -> Terms.copy_fact4 f, mk) hyp_mk'' in
               let concl1 = Terms.copy_fact4 concl'' in
@@ -149,7 +151,7 @@ let add_rule_follow f_next hyp concl constra tags =
                   ProcessRule(hsl, nl) -> ProcessRule(hsl, List.map Terms.copy_term4 nl)
                 | x -> x
               in
-              add_and_follow f_next (hyp1,concl1,Rule (!nrule, tags1, hyp1, concl1, constra1),constra1,false)
+              add_and_follow f_next (hyp1,concl1,Rule (!nrule, tags1, hyp1, concl1, constra1),constra1,Protocol)
             ) (concl''::hyp'') constra''
           with TermsEq.FalseConstraint -> ()
         end
@@ -160,7 +162,7 @@ let add_rule_follow f_next hyp concl constra tags =
       let hyp_mk = List.map (fun f -> f,NoMarking) hyp in
       TermsEq.simplify_constraints (fun constra1 ->
         let constra1 = TermsEq.remove_caught_fail constra1 in
-        add_and_follow f_next (hyp_mk,concl,Rule (!nrule, tags, hyp_mk, concl, constra1),constra1,false)
+        add_and_follow f_next (hyp_mk,concl,Rule (!nrule, tags, hyp_mk, concl, constra1),constra1,Protocol)
       ) (fun constra1 ->
         let hyp_mk1 = List.map (fun f -> Terms.copy_fact4 f,NoMarking) hyp in
         let concl1 = Terms.copy_fact4 concl in
@@ -170,7 +172,7 @@ let add_rule_follow f_next hyp concl constra tags =
             ProcessRule(hsl, nl) -> ProcessRule(hsl, List.map Terms.copy_term4 nl)
           | x -> x
         in
-        add_and_follow f_next (hyp_mk1,concl1,Rule (!nrule, tags1, hyp_mk1, concl1, constra1),constra1,false)
+        add_and_follow f_next (hyp_mk1,concl1,Rule (!nrule, tags1, hyp_mk1, concl1, constra1),constra1,Protocol)
       ) (concl::hyp) constra
     with TermsEq.FalseConstraint -> ()
 

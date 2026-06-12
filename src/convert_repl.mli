@@ -12,8 +12,7 @@
 
 XOR EXTENSION
 
-Anonymously submitted for CCS 2026
-Anonymous authors
+Vincent Cheval and Stéphanie Delaune
 
 *************************************************************)
 

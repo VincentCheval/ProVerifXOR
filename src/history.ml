@@ -9,14 +9,15 @@
  *************************************************************)
 
 (*************************************************************
-
-XOR EXTENSION
-
-Anonymously submitted for CCS 2026
-Anonymous authors
-
+*                                                           *
+* XOR EXTENSION                                             *
+*                                                           *
+* Vincent Cheval and Stéphanie Delaune                      *
+*                                                           *
+* Copyright (C) INRIA, CNRS 2000-2026                       *
+* Copytight (C) University of Oxford, 2026                  *
+*                                                           *
 *************************************************************)
-
 
 (*
 
@@ -35,6 +36,7 @@ Anonymous authors
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 *)
+
 open Types
 open Parsing_helper
 open Terms
@@ -649,7 +651,7 @@ let get_clause_from_derivation tree =
   in
   let hist = Rule(-1, LblNone, (List.map (fun f -> f,NoMarking) hyp''), concl'', constra'') in
 
-  (((List.map (fun f -> f,NoMarking) hyp''), concl'', hist, constra'',false):marked_reduction)
+  (((List.map (fun f -> f,NoMarking) hyp''), concl'', hist, constra'',Protocol):marked_reduction)
 
 exception Loop
 

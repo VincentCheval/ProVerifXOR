@@ -9,14 +9,15 @@
  *************************************************************)
 
 (*************************************************************
-
-XOR EXTENSION
-
-Anonymously submitted for CCS 2026
-Anonymous authors
-
+*                                                           *
+* XOR EXTENSION                                             *
+*                                                           *
+* Vincent Cheval and Stéphanie Delaune                      *
+*                                                           *
+* Copyright (C) INRIA, CNRS 2000-2026                       *
+* Copytight (C) University of Oxford, 2026                  *
+*                                                           *
 *************************************************************)
-
 
 (*
 
@@ -35,6 +36,7 @@ Anonymous authors
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 *)
+
 (* Trace reconstruction
    This version of the trace reconstruction does not exploit the
    order of nodes in the derivation tree.
@@ -147,7 +149,7 @@ let display_rule (n, sons, hsl, nl, concl) =
   print_string ("Rule " ^ (string_of_int n) ^ ": ");
   display_tag hsl nl;
   print_string "  ";
-  Display.Text.display_rule (List.map (fun t -> copy_fact2 t, NoMarking) sons, copy_fact2 concl, Empty concl, Terms.true_constraints,false);
+  Display.Text.display_rule (List.map (fun t -> copy_fact2 t, NoMarking) sons, copy_fact2 concl, Empty concl, Terms.true_constraints,Protocol);
   Display.Text.newline()
 
 (* Display the trace *)
@@ -2523,7 +2525,7 @@ let check_conclusion_query restwork max_step prem_steps inj_steps b event_table 
               )
             in
             (* check the facts and constraints by resolution *)
-            let r0 = { rule = (facts, bad_fact, Rule(-1, LblNone, facts, bad_fact, constra), constra,false); order_data = None } in
+            let r0 = { rule = (facts, bad_fact, Rule(-1, LblNone, facts, bad_fact, constra), constra,Protocol); order_data = None } in
             if (Terms.auto_cleanup (fun () -> Rules.solving_request_rule [] [] r0)) != [] then
               (* The facts and constra may be derivable.
                   There may be an overapproximation here, but that's fine *)

@@ -1,3 +1,14 @@
+(*************************************************************
+*                                                           *
+* XOR EXTENSION                                             *
+*                                                           *
+* Vincent Cheval and Stéphanie Delaune                      *
+*                                                           *
+* Copyright (C) INRIA, CNRS 2000-2026                       *
+* Copytight (C) University of Oxford, 2026                  *
+*                                                           *
+*************************************************************)
+
 (* CR-xor - Toy exemple provided in
    Jannik Dreier, Lucca Hirschi, Sasa Radomirovic, Ralf Sasse:
    Automated Unbounded Verification of Stateful Cryptographic Protocols with Exclusive OR. CSF 2018: 359-373

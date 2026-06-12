@@ -9,32 +9,16 @@
  *************************************************************)
 
 (*************************************************************
-
-XOR EXTENSION
-
-Anonymously submitted for CCS 2026
-Anonymous authors
-
+*                                                           *
+* XOR EXTENSION                                             *
+*                                                           *
+* Vincent Cheval and Stéphanie Delaune                      *
+*                                                           *
+* Copyright (C) INRIA, CNRS 2000-2026                       *
+* Copytight (C) University of Oxford, 2026                  *
+*                                                           *
 *************************************************************)
 
-
-(*
-
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details (in file LICENSE).
-
-    You should have received a copy of the GNU General Public License along
-    with this program; if not, write to the Free Software Foundation, Inc.,
-    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
-*)
 open Terms
 open Types
 open Pitypes
@@ -245,7 +229,7 @@ module type ClauseSig =
 
     val fact_of_hyp_fact : hyp_fact -> fact
 
-    val get_clause_with_hyp_fact : t -> (hyp_fact list * fact * history * constraints * bool)
+    val get_clause_with_hyp_fact : t -> (hyp_fact list * fact * history * constraints * variant)
 
     (* [simplify_remove_hyp] simplifies a clause by removing some of its
        hypotheses, so that the obtained clause subsumes the original one.
@@ -462,15 +446,26 @@ module MakeSubsumption (C:ClauseSig) =
             if f1 != f2 then raise Unify;
             AC.Ac_unify.match_terms f_next (List.combine args1 args2)
 
+    let implies_annotation f_next (u1,v1) (u2,v2) = 
+      let annot1 = Terms.apply_symbol Terms.xor_fun [u1;v1] in
+      let annot2 = Terms.apply_symbol Terms.xor_fun [u2;v2] in
+      AC.Ac_unify.match_terms f_next [(annot1,annot2)]
+
     let implies_variant_hierarchy variant1 add_data1 variant2 add_data2 = match add_data1, add_data2 with
       | Solved _, _ -> true
       | _, Solved _ -> false
-      | _ -> not variant2 || variant1
+      | _ -> 
+          match variant1, variant2 with
+          | Variant, _ -> true
+          | _, Variant -> false
+          | AnnotatedVariant _, _ -> true
+          | _, AnnotatedVariant _ -> false
+          | _ -> true
 
     let implies_internal ((_,concl1,_,constr1,variant1):marked_reduction) sub_data1 add_data1 ((hyp2,concl2,_,constr2,variant2):marked_reduction) sub_data2 add_data2 =
       match add_data1, add_data2, variant1, variant2 with
       | Solved _, _, _, _
-      | Unsolved _, Unsolved _, true, false -> 
+      | Unsolved _, Unsolved _, (AnnotatedVariant _ | Variant), Protocol -> 
           begin try
             (* Set subsumption hence we ignore marking *)
             Terms.auto_cleanup (fun () ->
@@ -486,7 +481,8 @@ module MakeSubsumption (C:ClauseSig) =
             )
           with Terms.Unify -> false
           end
-      | Unsolved _, Unsolved _, _, _ -> 
+      | Unsolved _, Unsolved _, Variant, _
+      | Unsolved _, Unsolved _, Protocol, Protocol -> 
           begin try
           Terms.auto_cleanup (fun () ->
             implies_conclusion (fun () ->
@@ -500,6 +496,22 @@ module MakeSubsumption (C:ClauseSig) =
           )
         with Terms.Unify -> false
         end
+      | Unsolved _, Unsolved _, AnnotatedVariant(u1,v1), AnnotatedVariant(u2,v2) -> 
+          begin try
+          Terms.auto_cleanup (fun () ->
+            implies_annotation (fun () ->
+              implies_conclusion (fun () ->
+                let r2_bound_facts = multiset_match_hyp_bound sub_data1.bound_facts sub_data2.bound_facts in
+                (* All facts of [elt1.bound_facts] have been matched. *)
+                multiset_match_hyp (fun () ->
+                  TermsEq.implies_constraints_keepvars3 (concl2 :: List.rev_map (fun (f,_) -> f) hyp2) constr2 constr1
+                ) sub_data1.unbound_facts (r2_bound_facts @ sub_data2.unbound_facts);
+                true
+              ) concl1 concl2
+            ) (u1,v1) (u2,v2)
+          );
+        with Terms.Unify -> false
+        end
       | _ -> false
 
     let implies (cl1, sub_data1, add_data1) (cl2, sub_data2, add_data2) =
@@ -507,7 +519,7 @@ module MakeSubsumption (C:ClauseSig) =
       let ((hyp2,_,_,_,variant2) as r2) = C.get_reduction cl2 in
       match add_data1, add_data2, variant1, variant2 with
       | Solved _, _, _, _
-      | Unsolved _, Unsolved _, true, false -> 
+      | Unsolved _, Unsolved _, (AnnotatedVariant _ | Variant), Protocol -> 
           implies_internal r1 sub_data1 add_data1 r2 sub_data2 add_data2
       | Unsolved _, Unsolved _, _, _ -> 
           let ((hyp1,_,_,_,_) as r1) = C.get_reduction cl1 in
@@ -1579,10 +1591,10 @@ module Clause : ClauseSig with type hyp_fact = fact * marking and type t = marke
   struct
     type hyp_fact = fact * marking
     type t = marked_reduction
-    let empty_clause = ([], Param.dummy_fact, Empty(Param.dummy_fact), { neq = []; is_nat = []; is_not_nat = []; geq = [] },false)
+    let empty_clause = ([], Param.dummy_fact, Empty(Param.dummy_fact), { neq = []; is_nat = []; is_not_nat = []; geq = [] },Protocol)
     let get_reduction r = r
 
-    let is_variant_AC (_,_,_,_,variant) = variant
+    let is_variant_AC (_,_,_,_,variant) = variant <> Protocol
 
     let match_facts f_next comply_with_marking (fact1,mk1) (fact2,mk2) = 
       if comply_with_marking && not (Marking.match_marking mk1 mk2) then raise Terms.Unify;
@@ -1628,7 +1640,7 @@ module OrdClause : ClauseSig with type hyp_fact = fact * marking * ordering_func
 
     let is_variant_AC r = 
       let (_,_,_,_,variant) = r.rule in 
-      variant
+      variant <> Protocol
 
     let match_facts f_next comply_with_marking (f1,mk1,ord_fun1) (f2,mk2,ord_fun2) =
       if comply_with_marking && not (Marking.match_marking mk1 mk2) then raise Terms.Unify;

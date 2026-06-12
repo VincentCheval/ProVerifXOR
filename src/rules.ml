@@ -9,14 +9,15 @@
  *************************************************************)
 
 (*************************************************************
-
-XOR EXTENSION
-
-Anonymously submitted for CCS 2026
-Anonymous authors
-
+*                                                           *
+* XOR EXTENSION                                             *
+*                                                           *
+* Vincent Cheval and Stéphanie Delaune                      *
+*                                                           *
+* Copyright (C) INRIA, CNRS 2000-2026                       *
+* Copytight (C) University of Oxford, 2026                  *
+*                                                           *
 *************************************************************)
-
 
 (*
 
@@ -35,6 +36,7 @@ Anonymous authors
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 *)
+
 open Parsing_helper
 open Types
 open Terms
@@ -1354,7 +1356,7 @@ let elim_redundant_hyp_ordered next_stage repeat_next_stage ahist_op ((hyp, conc
 
 (* 10. Simplification using the equational theory *)
 
-let simp_eq_rule (next_stage:marked_reduction -> unit) ((hypl, concl, _, _, _) as rule:marked_reduction) =
+let simp_eq_rule (next_stage:marked_reduction -> unit) ((hypl, concl, _, _, variant) as rule:marked_reduction) =
   if TermsEq.hasConvergentEquations ()
   then
     try
@@ -1363,8 +1365,14 @@ let simp_eq_rule (next_stage:marked_reduction -> unit) ((hypl, concl, _, _, _) a
           if (!Param.simpeq_all_predicates) ||
              (p.p_prop land Param.pred_SIMPEQ != 0) || !Param.using_xor
           then List.iter TermsEq.simp_eq l
-              ) ((concl,NoMarking)::hypl)
-          );
+        ) ((concl,NoMarking)::hypl);
+  
+        match variant with
+        | AnnotatedVariant(t1,t2) -> 
+            TermsEq.simp_eq t1;
+            TermsEq.simp_eq t2
+        | _ -> ()
+      );
       next_stage rule
     with TermsEq.Reduces ->
       () (* Remove the clause when a term reduces. *)
@@ -2484,7 +2492,8 @@ let compos (next_stage:marked_reduction -> unit) ((hyp1, concl1, hist1,constra1,
               let concl' = copy_fact2 concl2 in
               let hist' = Resolution(hist1, sel_index, hist2) in
               let constra' = wedge_constraints (copy_constra2 constra1) (copy_constra2 constra2) in
-              (hyp',concl',hist',constra',variant2)
+              let variant' = copy_variant2 variant2 in
+              (hyp',concl',hist',constra',variant')
             )
           in
 
@@ -2636,7 +2645,7 @@ let apply_rewrite_rule_match t1 t2 = match Terms.xor_fun.f_cat with
   | _ -> internal_error "Unexpected category"
 
 let saturate_hypotheses_for_non_variant (((hypl,concl,hist,constr,variant),_) as annot_cl) =
-  if variant || not !Param.using_xor
+  if variant <> Protocol || not !Param.using_xor
   then annot_cl
   else
     begin 
@@ -2738,7 +2747,7 @@ let redundant is_solved ruleset queue ((initrule, _) as annot_initrule) =
         if !Param.using_xor then Database.QueueClause.iter apply_queue queue
   in
   try
-    let rule = ([initconcl,NoMarking], initconcl, Empty(initconcl), true_constraints,false) in
+    let rule = ([initconcl,NoMarking], initconcl, Empty(initconcl), true_constraints,Protocol) in
     let annot_rule = Database.SubClause.generate_subsumption_data rule in
     redundant_rec annot_rule true;
     false
@@ -3066,7 +3075,7 @@ let solving_request_rule ?(close_equation=true) ?(apply_not=false) lemmas induct
 
 (* Only used in query_goal and query_goal_not. *)
 let query_goal_std lemmas g =
-  let ord_rule = { rule = ([g,NoMarking], g, Empty(g),true_constraints,false); order_data = None } in
+  let ord_rule = { rule = ([g,NoMarking], g, Empty(g),true_constraints,Protocol); order_data = None } in
   solving_request_rule lemmas [] ord_rule
 
 (* Only used for Horn and typed Horn front-ends *)

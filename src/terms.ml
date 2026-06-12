@@ -9,14 +9,15 @@
  *************************************************************)
 
 (*************************************************************
-
-XOR EXTENSION
-
-Anonymously submitted for CCS 2026
-Anonymous authors
-
+*                                                           *
+* XOR EXTENSION                                             *
+*                                                           *
+* Vincent Cheval and Stéphanie Delaune                      *
+*                                                           *
+* Copyright (C) INRIA, CNRS 2000-2026                       *
+* Copytight (C) University of Oxford, 2026                  *
+*                                                           *
 *************************************************************)
-
 
 (*
 
@@ -35,6 +36,7 @@ Anonymous authors
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 *)
+
 open Parsing_helper
 open Types
 open Funsymbhash
@@ -938,10 +940,14 @@ let copy_marked_fact ((fact,mk) as mf) = match fact with
 
 let copy_constra c = map_constraints copy_term c
 
+let copy_variant = function
+  | AnnotatedVariant(t1,t2) -> AnnotatedVariant(copy_term t1,copy_term t2)
+  | v -> v
+
 let copy_rule ((hyp,concl,hist,constra,variant):marked_reduction) : marked_reduction =
   let tmp_bound = !current_bound_vars in
   current_bound_vars := [];
-  let r = (mapq_list copy_marked_fact hyp, copy_fact concl, hist, copy_constra constra, variant) in
+  let r = (mapq_list copy_marked_fact hyp, copy_fact concl, hist, copy_constra constra, copy_variant variant) in
   cleanup();
   current_bound_vars := tmp_bound;
   r
@@ -1098,16 +1104,20 @@ let copy_marked_fact2 ((fact,mk) as mf) = match fact with
 
 let rec copy_constra2 c = map_constraints copy_term2 c
 
+let copy_variant2 = function 
+  | AnnotatedVariant(t1,t2) -> AnnotatedVariant(copy_term2 t1, copy_term2 t2)
+  | v -> v
+
 let copy_rule2 ((hyp, concl, hist, constra, variant):marked_reduction) =
   let tmp_bound = !current_bound_vars in
   current_bound_vars := [];
-  let r = (mapq_list copy_marked_fact2 hyp, copy_fact2 concl, hist, copy_constra2 constra, variant) in
+  let r = (mapq_list copy_marked_fact2 hyp, copy_fact2 concl, hist, copy_constra2 constra, copy_variant2 variant) in
   cleanup();
   current_bound_vars := tmp_bound;
   r
 
 let copy_rule2_no_cleanup (hyp, concl, hist, constra, variant) =
-  (List.map copy_marked_fact2 hyp, copy_fact2 concl, hist, copy_constra2 constra, variant)
+  (List.map copy_marked_fact2 hyp, copy_fact2 concl, hist, copy_constra2 constra, copy_variant2 variant)
 
 let copy_ordered_rule2 ord_rule =
   let rule = copy_rule2 ord_rule.rule in

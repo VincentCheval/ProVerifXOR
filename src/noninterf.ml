@@ -9,14 +9,15 @@
  *************************************************************)
 
 (*************************************************************
-
-XOR EXTENSION
-
-Anonymously submitted for CCS 2026
-Anonymous authors
-
+*                                                           *
+* XOR EXTENSION                                             *
+*                                                           *
+* Vincent Cheval and Stéphanie Delaune                      *
+*                                                           *
+* Copyright (C) INRIA, CNRS 2000-2026                       *
+* Copytight (C) University of Oxford, 2026                  *
+*                                                           *
 *************************************************************)
-
 
 (*
 
@@ -35,6 +36,7 @@ Anonymous authors
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 *)
+
 open Types
 open Terms
 
@@ -55,7 +57,7 @@ let initialize = function
 
 let is_standard_clause = function
     ([Pred(p1, [Var v1]),NoMarking; Pred(p2, [Var v2]),NoMarking; Pred({p_info = TestUnifP _}, [Var v1'; Var v2']),NoMarking],
-     (Pred(p4, [])), _, c,false)
+     (Pred(p4, [])), _, c,Protocol)
       when p1.p_prop land Param.pred_ATTACKER != 0
       && p2.p_prop land Param.pred_ATTACKER != 0
       && p4 == Param.bad_pred

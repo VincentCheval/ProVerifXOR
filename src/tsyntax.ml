@@ -9,14 +9,15 @@
  *************************************************************)
 
 (*************************************************************
-
-XOR EXTENSION
-
-Anonymously submitted for CCS 2026
-Anonymous authors
-
+*                                                           *
+* XOR EXTENSION                                             *
+*                                                           *
+* Vincent Cheval and Stéphanie Delaune                      *
+*                                                           *
+* Copyright (C) INRIA, CNRS 2000-2026                       *
+* Copytight (C) University of Oxford, 2026                  *
+*                                                           *
 *************************************************************)
-
 
 (*
 
@@ -284,7 +285,7 @@ let add_new_name p =
   ignore (Display.string_of_fsymb new_name_fun);
   let new_name = FunApp(new_name_fun, [v1]) in
   let f = Pred(p, List.map (fun _ -> new_name) p.p_type) in
-  rules := ([], f, Rule(!rule_counter, Rn p, [], f, Terms.true_constraints), Terms.true_constraints, false) :: (!rules)
+  rules := ([], f, Rule(!rule_counter, Rn p, [], f, Terms.true_constraints), Terms.true_constraints, Protocol) :: (!rules)
 
 let rec interpret_info ty prop = function
     ("memberOptim", ext) ->
@@ -438,7 +439,7 @@ let rec check_red = function
       let (hyp, constra) = List.fold_right (fun onehyp accu -> check_one_hyp accu env onehyp) i ([],Terms.true_constraints) in
       let concl = check_simple_fact env c in
       let hist = Rule(!rule_counter, LblNone, hyp, concl, constra) in
-      rules := (hyp, concl, hist, constra,false) :: (!rules)
+      rules := (hyp, concl, hist, constra,Protocol) :: (!rules)
   | (env, Equiv(i,c,select))::l ->
       (* The "select" flag was used to prevent selecting facts that unify with c. It is now ignored. *)
       check_red l;
@@ -447,7 +448,7 @@ let rec check_red = function
       let concl = check_simple_fact env c in
       let requiv =
 	      incr rule_counter;
-	      (hyp, concl, Rule(!rule_counter, LblEquiv, hyp, concl, Terms.true_constraints), Terms.true_constraints,false)
+	      (hyp, concl, Rule(!rule_counter, LblEquiv, hyp, concl, Terms.true_constraints), Terms.true_constraints,Protocol)
       in
       add_equiv (List.map (fun (fact,_) -> fact) hyp, concl, !rule_counter);
       rules := (
@@ -456,7 +457,7 @@ let rec check_red = function
 	        let (concl, h) = 
             Terms.auto_cleanup (fun () -> (Terms.copy_fact concl, Terms.copy_fact h))
 	        in
-	        ([concl,NoMarking], h, Rule(!rule_counter, LblEquiv, [concl,NoMarking], h, Terms.true_constraints), Terms.true_constraints, false)) hyp)
+	        ([concl,NoMarking], h, Rule(!rule_counter, LblEquiv, [concl,NoMarking], h, Terms.true_constraints), Terms.true_constraints, Protocol)) hyp)
       @ (requiv :: (!rules))
 
 
@@ -465,7 +466,7 @@ let gen_data_clauses () =
     match History.get_rule_hist h with
       (Rule(_, t, hyp, concl, constra)) ->
 	incr rule_counter;
-	rules := (hyp, concl, Rule(!rule_counter, t, hyp, concl, constra), constra, false) :: (!rules)
+	rules := (hyp, concl, Rule(!rule_counter, t, hyp, concl, constra), constra, Protocol) :: (!rules)
     | _ -> Parsing_helper.internal_error "unexpected result in output_rule_hist"
   in
 
@@ -520,7 +521,7 @@ let rec check_all = function
       let env = create_env env in
       let f = check_simple_fact env fact in
       incr rule_counter;
-      rules := ([], f, Rule(!rule_counter, LblNone, [], f, Terms.true_constraints), Terms.true_constraints, false) :: (!rules);
+      rules := ([], f, Rule(!rule_counter, LblNone, [], f, Terms.true_constraints), Terms.true_constraints, Protocol) :: (!rules);
       add_elimtrue (!rule_counter, f);
       check_all l
   | (TPredDecl (p, argt, info)) :: l ->

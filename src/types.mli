@@ -9,14 +9,15 @@
  *************************************************************)
 
 (*************************************************************
-
-XOR EXTENSION
-
-Anonymously submitted for CCS 2026
-Anonymous authors
-
+*                                                           *
+* XOR EXTENSION                                             *
+*                                                           *
+* Vincent Cheval and Stéphanie Delaune                      *
+*                                                           *
+* Copyright (C) INRIA, CNRS 2000-2026                       *
+* Copytight (C) University of Oxford, 2026                  *
+*                                                           *
 *************************************************************)
-
 
 (*
 
@@ -35,6 +36,7 @@ Anonymous authors
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 *)
+
 (* Types module declares types of the abstract syntax
    tree and of sets of messages.
    There are recursive dependencies between these types,
@@ -450,7 +452,12 @@ type history =
 
 type reduction = fact list * fact * history * constraints
 
-type marked_reduction = (fact * marking) list * fact * history * constraints * bool
+type variant =
+  | Protocol
+  | AnnotatedVariant of term * term
+  | Variant
+
+type marked_reduction = (fact * marking) list * fact * history * constraints * variant
 
 type order =
   | Less

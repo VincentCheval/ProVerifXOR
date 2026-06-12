@@ -9,14 +9,15 @@
  *************************************************************)
 
 (*************************************************************
-
-XOR EXTENSION
-
-Anonymously submitted for CCS 2026
-Anonymous authors
-
+*                                                           *
+* XOR EXTENSION                                             *
+*                                                           *
+* Vincent Cheval and Stéphanie Delaune                      *
+*                                                           *
+* Copyright (C) INRIA, CNRS 2000-2026                       *
+* Copytight (C) University of Oxford, 2026                  *
+*                                                           *
 *************************************************************)
-
 
 (*
 
@@ -35,6 +36,7 @@ Anonymous authors
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 *)
+
 (* This module optimizes subsumption using feature vectors.
    See Simple and Efficient Clause Subsumption with Feature Vector Indexing,
    by Stephan Schulz, in: Automated Reasoning and Mathematics,
@@ -84,7 +86,7 @@ module type ClauseSig =
 
     val fact_of_hyp_fact : hyp_fact -> fact
 
-    val get_clause_with_hyp_fact : t -> (hyp_fact list * fact * history * constraints * bool)
+    val get_clause_with_hyp_fact : t -> (hyp_fact list * fact * history * constraints * variant)
 
     (* [simplify_remove_hyp] simplifies a clause by removing some of its
        hypotheses, so that the obtained clause subsumes the original one.

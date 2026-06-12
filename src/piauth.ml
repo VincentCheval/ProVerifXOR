@@ -9,14 +9,15 @@
  *************************************************************)
 
 (*************************************************************
-
-XOR EXTENSION
-
-Anonymously submitted for CCS 2026
-Anonymous authors
-
+*                                                           *
+* XOR EXTENSION                                             *
+*                                                           *
+* Vincent Cheval and Stéphanie Delaune                      *
+*                                                           *
+* Copyright (C) INRIA, CNRS 2000-2026                       *
+* Copytight (C) University of Oxford, 2026                  *
+*                                                           *
 *************************************************************)
-
 
 (*
 
@@ -35,6 +36,7 @@ Anonymous authors
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 *)
+
 open Parsing_helper
 open Types
 open Pitypes
@@ -86,11 +88,11 @@ let ordered_rule_of_auth_ordered ((hypl,concl,hist,constra):auth_ordered_reducti
       (f,NoMarking)::acc_f,ord_data::acc_o
     ) hypl ([],[])
   in
-  { rule = (hypl',concl,hist,constra,false); order_data = Some order_data }
+  { rule = (hypl',concl,hist,constra,Protocol); order_data = Some order_data }
 
 let rule_of_auth_ordered_rule ((hypl,concl,hist,constra):auth_ordered_reduction) =
   let hypl' = List.map (fun (f,_) -> f,NoMarking) hypl in
-  (hypl',concl,hist,constra,false)
+  (hypl',concl,hist,constra,Protocol)
 
 let copy_auth_rule2 ((hyp, concl, hist, constra):auth_ordered_reduction) =
   Terms.auto_cleanup_nocatch (fun () ->
@@ -440,14 +442,14 @@ let get_clauses_for_preds () =
         List.iter (fun (hyp1, concl1, constra1, tag1) ->
           TermsEq.close_rule_destr_eq (fun (hyp, concl, constra) ->
             let hyp = List.map (fun f -> f,NoMarking) hyp in
-            clauses := (hyp, concl, Rule(-1, tag1, hyp, concl, constra), constra,false) :: (!clauses)
+            clauses := (hyp, concl, Rule(-1, tag1, hyp, concl, constra), constra,Protocol) :: (!clauses)
           ) (hyp1, concl1, constra1)
         ) (!Param.current_state).pi_input_clauses;
 
         List.iter (fun fact ->
           TermsEq.close_rule_destr_eq (fun (hyp, concl, constra) ->
             let hyp = List.map (fun f -> f,NoMarking) hyp in
-            clauses := (hyp, concl, Rule(-1, LblClause, hyp, concl, constra), constra,false) :: (!clauses)
+            clauses := (hyp, concl, Rule(-1, LblClause, hyp, concl, constra), constra,Protocol) :: (!clauses)
           ) ([], fact, Terms.true_constraints)
         ) (!Param.current_state).pi_elimtrue;
 
@@ -502,7 +504,7 @@ let event_list_to_rule evl =
   match evl_no_constra with
   | [e] ->
       let g = event_to_end_fact e in
-      ([g,NoMarking], g, Rule(-1, Goal, [g,NoMarking], g, constra), constra, false)
+      ([g,NoMarking], g, Rule(-1, Goal, [g,NoMarking], g, constra), constra, Protocol)
   | el ->
       let hyp = List.map event_to_end_fact el in
       let pl = List.map (function Pred(p,_) -> p) hyp
@@ -512,7 +514,7 @@ let event_list_to_rule evl =
       in
       let concl = Pred(combined_pred, args) in
       let hyp = List.map (fun f -> f,NoMarking) hyp in
-      (hyp, concl, Rule(-1, GoalCombined, hyp, concl, constra), constra, false)
+      (hyp, concl, Rule(-1, GoalCombined, hyp, concl, constra), constra, Protocol)
 
 let generate_initial_request_rule_no_order (Before(el,_)) =
   let ((hypl,_,_,_,_) as rule) = event_list_to_rule el in
@@ -815,7 +817,7 @@ let compare_two_clauses lemmas ((n1,ev1),(hyp1,concl1,hist1,constra1,variant1),o
           HInjectivity(inj,Resolution(hist1,0,(Resolution(hist2,1,rule_combined))))
         in
 
-        let clause = (hyp1@hyp2,concl_combined,hist_combined,constra_combined,false) in
+        let clause = (hyp1@hyp2,concl_combined,hist_combined,constra_combined,Protocol) in
         let clause' = copy_rule2 clause in
         let ord_rule = { rule = clause'; order_data = None } in
 
@@ -1036,14 +1038,14 @@ let match_unblock_predicates_same_ord_fun lemmas g_pred_unblock g_constra pred_u
       List.fold_left (fun acc fact -> match fact with
         | Pred(p,_) when p == Param.event2_pred_block || p == Param.event_pred_block || p == Param.inj_event_pred_block -> assert false
         | Pred({p_info = Block p;_},args) ->
-            ([], Pred(p,args), Rule(-1, LblNone, [], Pred(p,args), Terms.true_constraints), Terms.true_constraints,false) :: acc
+            ([], Pred(p,args), Rule(-1, LblNone, [], Pred(p,args), Terms.true_constraints), Terms.true_constraints,Protocol) :: acc
         | _ -> acc
       ) [] pred_block_cl'
     in
     let clauses =
-       (g_pred_marked_unblock', bad_fact, Rule(-1, LblNone, g_pred_marked_unblock', bad_fact, g_constra'), g_constra', false) ::
+       (g_pred_marked_unblock', bad_fact, Rule(-1, LblNone, g_pred_marked_unblock', bad_fact, g_constra'), g_constra', Protocol) ::
        (get_clauses_for_preds()) @
-       (List.map (fun fact -> ([], fact, Rule(-1, LblNone, [], fact, Terms.true_constraints), Terms.true_constraints, false)) pred_unblock_cl') @
+       (List.map (fun fact -> ([], fact, Rule(-1, LblNone, [], fact, Terms.true_constraints), Terms.true_constraints, Protocol)) pred_unblock_cl') @
        unblocked_predicate_clauses
     in
     Display.auto_cleanup_display (fun () ->
@@ -1194,7 +1196,7 @@ let negate_predicate_constra lemmas ind_lemmas (hypl,concl,hist,constra) g_const
       )
     in
     
-    let clause1 = (marked_hypl,concl, hist', { constra with is_not_nat = t'::constra.is_not_nat },false) in
+    let clause1 = (marked_hypl,concl, hist', { constra with is_not_nat = t'::constra.is_not_nat },Protocol) in
     let clause2 = copy_rule2 clause1 in
     let ord_rule = { rule = clause2; order_data = order_data_op } in
 
@@ -1224,9 +1226,9 @@ let negate_predicate_constra lemmas ind_lemmas (hypl,concl,hist,constra) g_const
       )
     in
 
-    let clause1 = (marked_hypl,concl, hist1, { constra with is_not_nat = t1'::constra.is_not_nat },false) in
-    let clause2 = (marked_hypl,concl, hist2, { constra with is_not_nat = t2'::constra.is_not_nat },false) in
-    let clause3 = (marked_hypl,concl, hist3, { constra with geq = (t2',(-n-1),t1')::constra.geq },false) in
+    let clause1 = (marked_hypl,concl, hist1, { constra with is_not_nat = t1'::constra.is_not_nat },Protocol) in
+    let clause2 = (marked_hypl,concl, hist2, { constra with is_not_nat = t2'::constra.is_not_nat },Protocol) in
+    let clause3 = (marked_hypl,concl, hist3, { constra with geq = (t2',(-n-1),t1')::constra.geq },Protocol) in
 
     List.iter (fun cl ->
       let cl' = copy_rule2 cl in
@@ -1275,7 +1277,7 @@ let negate_predicate_constra lemmas ind_lemmas (hypl,concl,hist,constra) g_const
               (* Relink the variables *)
               List.iter (fun (x,t) -> x.link <- TLink t) subst;
 
-              let clause1 = (marked_hypl,concl,hist',constra,false) in
+              let clause1 = (marked_hypl,concl,hist',constra,Protocol) in
               let clause2 = copy_rule2 clause1 in
               let ord_rule = { rule = clause2; order_data = order_data_op } in
               Terms.auto_cleanup (fun () ->
@@ -1317,7 +1319,7 @@ let generate_positive_clauses ((hypl,concl,hist,constra):auth_ordered_reduction)
   then
     Terms.auto_cleanup (fun () ->
       (* Check if the hypotheses of the new clause are satisfiable *)
-      let clause = (hypl',concl,hist,Terms.wedge_constraints constra g_constra_to_add1,false) in
+      let clause = (hypl',concl,hist,Terms.wedge_constraints constra g_constra_to_add1,Protocol) in
       if Rules.is_hypothesis_unsatisfiable clause
       then raise Unify
     );

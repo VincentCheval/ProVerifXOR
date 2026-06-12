@@ -9,14 +9,15 @@
  *************************************************************)
 
 (*************************************************************
-
-XOR EXTENSION
-
-Anonymously submitted for CCS 2026
-Anonymous authors
-
+*                                                           *
+* XOR EXTENSION                                             *
+*                                                           *
+* Vincent Cheval and Stéphanie Delaune                      *
+*                                                           *
+* Copyright (C) INRIA, CNRS 2000-2026                       *
+* Copytight (C) University of Oxford, 2026                  *
+*                                                           *
 *************************************************************)
-
 
 (*
 
@@ -35,6 +36,7 @@ Anonymous authors
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 *)
+
 open Types
 open Terms
 
@@ -58,7 +60,7 @@ let initialize = function
 
 let detect_atteq = function
     ([Pred(p1, [Var v1; Var v2]),NoMarking; Pred(p2, [Var v3; Var v4]),NoMarking],
-     (Pred(p4, [])), _, { neq = [[(Var v5, Var v6)]]; is_nat = []; is_not_nat = []; geq = [] },false)
+     (Pred(p4, [])), _, { neq = [[(Var v5, Var v6)]]; is_nat = []; is_not_nat = []; geq = [] },Protocol)
       when p1.p_prop land Param.pred_ELIMVAR != 0
       && p2.p_prop land Param.pred_ELIMVAR != 0
       && p4 == Param.bad_pred
@@ -68,7 +70,7 @@ let detect_atteq = function
 
 let detect_atteq2 = function
     ([Pred(p1, [Var v1; Var v2]),NoMarking; Pred(p2, [Var v3; Var v4]),NoMarking],
-     (Pred(p4, [])), _, { neq = [[(Var v5, Var v6)]]; is_nat = []; is_not_nat = []; geq = [] },false)
+     (Pred(p4, [])), _, { neq = [[(Var v5, Var v6)]]; is_nat = []; is_not_nat = []; geq = [] },Protocol)
       when p1.p_prop land Param.pred_ELIMVAR != 0
       && p2.p_prop land Param.pred_ELIMVAR != 0
       && p4 == Param.bad_pred
@@ -78,7 +80,7 @@ let detect_atteq2 = function
 
 let detect_atteq3 = function
     ([Pred(p1, [Var v1]),NoMarking; Pred(p2, [Var v3; Var v4]),NoMarking],
-     (Pred(p4, [])), _, { neq = [[(Var v5, Var v6)]]; is_nat = []; is_not_nat = []; geq = [] },flase)
+     (Pred(p4, [])), _, { neq = [[(Var v5, Var v6)]]; is_nat = []; is_not_nat = []; geq = [] },Protocol)
       when p1.p_prop land Param.pred_ATTACKER != 0
       && p2.p_prop land Param.pred_ELIMVAR != 0
       && p4 == Param.bad_pred
@@ -88,7 +90,7 @@ let detect_atteq3 = function
 
 let detect_atteq4 = function
     ([Pred(p1, [Var v1]),NoMarking; Pred(p2, [Var v3; Var v4]),NoMarking],
-     (Pred(p4, [])), _, { neq = [[(Var v5, Var v6)]]; is_nat = []; is_not_nat = []; geq = [] },false)
+     (Pred(p4, [])), _, { neq = [[(Var v5, Var v6)]]; is_nat = []; is_not_nat = []; geq = [] },Protocol)
       when p1.p_prop land Param.pred_ATTACKER != 0
       && p2.p_prop land Param.pred_ELIMVAR != 0
       && p4 == Param.bad_pred

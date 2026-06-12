@@ -9,14 +9,15 @@
  *************************************************************)
 
 (*************************************************************
-
-XOR EXTENSION
-
-Anonymously submitted for CCS 2026
-Anonymous authors
-
+*                                                           *
+* XOR EXTENSION                                             *
+*                                                           *
+* Vincent Cheval and Stéphanie Delaune                      *
+*                                                           *
+* Copyright (C) INRIA, CNRS 2000-2026                       *
+* Copytight (C) University of Oxford, 2026                  *
+*                                                           *
 *************************************************************)
-
 
 (*
 
@@ -35,6 +36,7 @@ Anonymous authors
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 *)
+
 open Parsing_helper
 open Types
 open Pitypes
@@ -177,7 +179,7 @@ and check_pred pi_state error_message seen_pred_calls (p, ground_list) =
             let error_message' () =
               error_message();
               print_string "Clause ";
-              Display.Text.display_rule (hyp, concl, Empty concl, constra, false)
+              Display.Text.display_rule (hyp, concl, Empty concl, constra, Protocol)
             in
             let error_message'' () =
               error_message'();
@@ -384,12 +386,12 @@ let output_rule cur_state out_fact = match cur_state.record_fun_opt with
         begin
           try
             TermsEq.simplify_constraints (fun constra3 ->
-              add_rule_follow f_rule hyp concl constra3 (ProcessRule(cur_state.hyp_tags, name_params2)) false
+              add_rule_follow f_rule hyp concl constra3 (ProcessRule(cur_state.hyp_tags, name_params2)) Protocol
             ) (fun constra3 ->
               let hyp3 = List.map Terms.copy_fact4 hyp in
               let concl3 = Terms.copy_fact4 concl in
               let name_params3 = List.map Terms.copy_term4 name_params2 in
-              add_rule_follow f_rule hyp3 concl3 constra3 (ProcessRule(cur_state.hyp_tags, name_params3)) false
+              add_rule_follow f_rule hyp3 concl3 constra3 (ProcessRule(cur_state.hyp_tags, name_params3)) Protocol
             ) (concl::hyp) constra2
           with TermsEq.FalseConstraint -> ()
         end;
@@ -427,12 +429,12 @@ let output_rule cur_state out_fact = match cur_state.record_fun_opt with
             Terms.cleanup();
             try
               TermsEq.simplify_constraints (fun constra4 ->
-                add_rule_follow f_rule hyp concl constra4 (ProcessRule(cur_state.hyp_tags, name_params3)) false
+                add_rule_follow f_rule hyp concl constra4 (ProcessRule(cur_state.hyp_tags, name_params3)) Protocol
               ) (fun constra4 ->
                 let hyp4 = List.map Terms.copy_fact4 hyp in
                 let concl4 = Terms.copy_fact4 concl in
                 let name_params4 = List.map Terms.copy_term4 name_params3 in
-                add_rule_follow f_rule hyp4 concl4 constra4 (ProcessRule(cur_state.hyp_tags, name_params4)) false
+                add_rule_follow f_rule hyp4 concl4 constra4 (ProcessRule(cur_state.hyp_tags, name_params4)) Protocol
               ) (concl::hyp) constra3
             with TermsEq.FalseConstraint -> ()
           end
@@ -1878,11 +1880,18 @@ let rules_for_red pi_state phase f red_rules =
     let res_pred = Param.get_pred (Attacker(phase, snd f.f_type)) in
     let (hyp, concl, side_c) = Terms.copy_red red_rule in
     let marking = if f.f_AC && i <> 0 then Static f else NoMarking in
+    let variant = 
+      if f.f_AC 
+      then match hyp with
+        | [t1;t2] -> AnnotatedVariant(t1,t2)
+        | _ -> Parsing_helper.internal_error "rules_for_red: Wrong number of arguments"
+      else Protocol
+    in
     add_rule (List.map (fun f -> att_fact phase f, marking) hyp)
       (att_fact phase concl)
       side_c
       (Apply(f, res_pred))
-      f.f_AC;
+      variant;
     if Param.is_noninterf pi_state then
       begin
       (* The definition of destructors by rules
@@ -1907,7 +1916,7 @@ let rules_for_red pi_state phase f red_rules =
           (Pred(bad_pred, []))
           Terms.true_constraints
           (TestApply(f, res_pred))
-          false
+          Protocol
       end) red_rules
 
 let transl_attacker pi_state my_types phase =
@@ -1923,7 +1932,7 @@ let transl_attacker pi_state my_types phase =
     let v = Terms.new_var_def_term t in
     let vc = Terms.new_var_def_term Param.channel_type in
     add_rule [Pred(mess_pred, [vc; v]),NoMarking; att_fact phase vc, NoMarking]
-          (Pred(att_pred, [v])) Terms.true_constraints (Rl(att_pred,mess_pred)) false;
+          (Pred(att_pred, [v])) Terms.true_constraints (Rl(att_pred,mess_pred)) Protocol;
 
     if (!Param.active_attacker) then
       begin
@@ -1931,7 +1940,7 @@ let transl_attacker pi_state my_types phase =
         let v = Terms.new_var_def_term t in
         let vc = Terms.new_var_def_term Param.channel_type in
         add_rule [att_fact phase vc, NoMarking; Pred(att_pred, [v]),NoMarking]
-          (Pred(mess_pred, [vc; v])) Terms.true_constraints (Rs(att_pred, mess_pred)) false
+          (Pred(mess_pred, [vc; v])) Terms.true_constraints (Rs(att_pred, mess_pred)) Protocol
       end) my_types;
 
 
@@ -1943,9 +1952,9 @@ let transl_attacker pi_state my_types phase =
 
       (* The attacker can do communications *)
       let vc = Terms.new_var_def_term Param.channel_type in
-      add_rule [Pred(att_pred, [vc]), NoMarking] (Pred(input_pred, [vc])) Terms.true_constraints (Ri(att_pred, input_pred)) false;
+      add_rule [Pred(att_pred, [vc]), NoMarking] (Pred(input_pred, [vc])) Terms.true_constraints (Ri(att_pred, input_pred)) Protocol;
       let vc = Terms.new_var_def_term Param.channel_type in
-      add_rule [Pred(att_pred, [vc]), NoMarking] (Pred(output_pred, [vc])) Terms.true_constraints (Ro(att_pred, output_pred)) false;
+      add_rule [Pred(att_pred, [vc]), NoMarking] (Pred(output_pred, [vc])) Terms.true_constraints (Ro(att_pred, output_pred)) Protocol;
 
       (* Check communications do not reveal secrets *)
       let vc = Terms.new_var_def_term Param.channel_type in
@@ -1953,7 +1962,7 @@ let transl_attacker pi_state my_types phase =
       add_rule [Pred(input_pred, [vc]), NoMarking;
                  Pred(output_pred, [vc2]), NoMarking;
                  testunif_fact vc vc2, NoMarking]
-        (Pred(bad_pred, [])) Terms.true_constraints (TestComm(input_pred, output_pred)) false
+        (Pred(bad_pred, [])) Terms.true_constraints (TestComm(input_pred, output_pred)) Protocol
 
     end
 
@@ -1997,13 +2006,13 @@ let rules_for_red_guess f red_rules =
         (att_guess_fact concl1 concl2)
         (Terms.wedge_constraints side_c1 side_c2)
         (Apply(f, Param.get_pred (AttackerGuess(snd f.f_type)))) 
-        false
+        Protocol
         ) red_rules
       ) red_rules
 
 
 let weak_secret_clauses pi_state my_types w =
-  add_rule [] (att_guess_fact (FunApp(w, [])) (FunApp(weaksecretcst (snd w.f_type), []))) Terms.true_constraints WeakSecr false;
+  add_rule [] (att_guess_fact (FunApp(w, [])) (FunApp(weaksecretcst (snd w.f_type), []))) Terms.true_constraints WeakSecr Protocol;
 
   (* rules_for_function_guess for each function, including tuples *)
   List.iter (Terms.clauses_for_function rules_for_red_guess) pi_state.pi_funs;
@@ -2014,28 +2023,28 @@ let weak_secret_clauses pi_state my_types w =
 
     let x = Terms.new_var_def_term t
     and fail = Terms.get_fail_term t in
-    add_rule [Pred(att_guess, [x; fail]), NoMarking] (Pred(Param.bad_pred, [])) Terms.true_constraints (Rfail(att_guess)) false;
-    add_rule [Pred(att_guess, [fail; x]), NoMarking] (Pred(Param.bad_pred, [])) Terms.true_constraints (Rfail(att_guess)) false;
+    add_rule [Pred(att_guess, [x; fail]), NoMarking] (Pred(Param.bad_pred, [])) Terms.true_constraints (Rfail(att_guess)) Protocol;
+    add_rule [Pred(att_guess, [fail; x]), NoMarking] (Pred(Param.bad_pred, [])) Terms.true_constraints (Rfail(att_guess)) Protocol;
 
-    add_rule [] (Pred(att_guess, [fail;fail])) Terms.true_constraints Init false;
+    add_rule [] (Pred(att_guess, [fail;fail])) Terms.true_constraints Init Protocol;
 
     let v = Terms.new_var_def_term t in
     let hyp = [att_fact pi_state.pi_max_used_phase v, NoMarking] in
     let concl = Pred(att_guess, [v; v]) in
     let r = (t, Rule(!nrule, PhaseChange, hyp, concl, Terms.true_constraints)) in
-    add_rule hyp concl Terms.true_constraints PhaseChange false;
+    add_rule hyp concl Terms.true_constraints PhaseChange Protocol;
 
     let v1 = Terms.new_var_def_term t in
     let v2 = Terms.new_var_def_term t in
     let v3 = Terms.new_var_def_term t in
     add_rule [Pred(att_guess, [v1; v2]), NoMarking; Pred(att_guess, [v1; v3]), NoMarking]
-      (Pred(Param.bad_pred, [])) (Terms.constraints_of_neq v2 v3) (TestEq(att_guess)) false;
+      (Pred(Param.bad_pred, [])) (Terms.constraints_of_neq v2 v3) (TestEq(att_guess)) Protocol;
 
     let v1 = Terms.new_var_def_term t in
     let v2 = Terms.new_var_def_term t in
     let v3 = Terms.new_var_def_term t in
     add_rule [Pred(att_guess, [v2; v1]), NoMarking; Pred(att_guess, [v3; v1]), NoMarking]
-      (Pred(Param.bad_pred, [])) (Terms.constraints_of_neq v2 v3) (TestEq(att_guess)) false;
+      (Pred(Param.bad_pred, [])) (Terms.constraints_of_neq v2 v3) (TestEq(att_guess)) Protocol;
 
     (* adjust the selection function *)
     let v1 = Terms.new_var_def t in
@@ -2052,7 +2061,7 @@ let comp_output_rule prev_input out_fact =
   assert (!Terms.current_bound_vars == []);
   Terms.auto_cleanup (fun () ->
     add_rule (List.map (fun f -> Terms.copy_fact2 f, NoMarking) prev_input)
-    (Terms.copy_fact2 out_fact) Terms.true_constraints LblComp false
+    (Terms.copy_fact2 out_fact) Terms.true_constraints LblComp Protocol
   )
 
 let comp_fact t =
@@ -2125,7 +2134,7 @@ let comp_rules_for_function f =
        add_rule (List.map (fun t -> comp_fact t, NoMarking) vars)
          (comp_fact (FunApp(f,vars))) Terms.true_constraints
          (Apply(f, Param.get_pred (Compromise(snd f.f_type)))) 
-         false
+         Protocol
    | _ -> ()
 
 (* Not declarations *)
@@ -2170,7 +2179,7 @@ let get_not pi_state =
 let get_elimtrue_initial_clauses pi_state =
   List.iter (fun (hyp1, concl1, constra1, tag1) ->
     TermsEq.close_rule_destr_eq (fun (hyp, concl, constra) ->
-      add_rule (List.map (fun f -> f,NoMarking) hyp) concl constra tag1 false) (hyp1, concl1, constra1))
+      add_rule (List.map (fun f -> f,NoMarking) hyp) concl constra tag1 Protocol) (hyp1, concl1, constra1))
     pi_state.pi_input_clauses;
   let elimtrue_set = ref [] in
   let add_elimtrue f =
@@ -2182,7 +2191,7 @@ let get_elimtrue_initial_clauses pi_state =
          not empty, which may happen if the fact contains destructors
          with side conditions *)
       if Terms.is_true_constraints constra then add_elimtrue (!nrule, concl);
-      add_rule (List.map (fun f -> f,NoMarking) hyp) concl constra LblClause false) ([], fact, Terms.true_constraints))
+      add_rule (List.map (fun f -> f,NoMarking) hyp) concl constra LblClause Protocol) ([], fact, Terms.true_constraints))
     pi_state.pi_elimtrue;
   (!elimtrue_set, !red_rules)
 
@@ -2351,7 +2360,7 @@ let transl pi_state =
     transl_attacker pi_state my_types i;
     List.iter (fun t ->
       (* The attacker has fail *)
-      add_rule [] (att_fact i (Terms.get_fail_term t)) Terms.true_constraints Init false;
+      add_rule [] (att_fact i (Terms.get_fail_term t)) Terms.true_constraints Init Protocol;
 
       let att_i = Param.get_pred (Attacker(i,t)) in
       let v = Terms.new_var_def t in
@@ -2361,13 +2370,13 @@ let transl pi_state =
            because the attacker already has fail in all phases. *)
         let w = Terms.new_var_def_term t in
         let att_im1 = Param.get_pred (Attacker(i-1,t)) in
-        add_rule [Pred(att_im1, [w]),NoMarking] (Pred(att_i, [w])) Terms.true_constraints PhaseChange false
+        add_rule [Pred(att_im1, [w]),NoMarking] (Pred(att_i, [w])) Terms.true_constraints PhaseChange Protocol
           ) my_types;
     if i > 0 then
       let tbl_i = Param.get_pred (Table(i)) in
       let tbl_im1 = Param.get_pred (Table(i-1)) in
       let w = Terms.new_var_def_term Param.table_type in
-      add_rule [Pred(tbl_im1, [w]),NoMarking] (Pred(tbl_i, [w])) Terms.true_constraints TblPhaseChange false
+      add_rule [Pred(tbl_im1, [w]),NoMarking] (Pred(tbl_i, [w])) Terms.true_constraints TblPhaseChange Protocol
   done;
 
    (* Knowing the free names and creating new names is necessary only in phase 0.
@@ -2377,12 +2386,12 @@ let transl pi_state =
       The non-interference queries have their private flag set. *)
   List.iter (fun ch ->
     if not ch.f_private then
-      add_rule [] (att_fact 0 (FunApp(ch, []))) Terms.true_constraints Init false) pi_state.pi_freenames;
+      add_rule [] (att_fact 0 (FunApp(ch, []))) Terms.true_constraints Init Protocol) pi_state.pi_freenames;
 
   List.iter (fun t ->
     (* Clauses for equality *)
     let v = Terms.new_var_def_term t in
-    add_rule [] (Pred(Param.get_pred (Equal(t)), [v;v])) Terms.true_constraints LblEq false;
+    add_rule [] (Pred(Param.get_pred (Equal(t)), [v;v])) Terms.true_constraints LblEq Protocol;
 
     (* The attacker can create new names *)
     let att_pred0 = Param.get_pred (Attacker(0, t)) in
@@ -2393,10 +2402,10 @@ let transl pi_state =
     ignore (Display.string_of_fsymb new_name_fun);
     if non_interference then
       add_rule [att_fact 0 v,NoMarking] (att_fact 0 (FunApp(new_name_fun, [v])))
-        Terms.true_constraints (Rn att_pred0) false
+        Terms.true_constraints (Rn att_pred0) Protocol
     else
       add_rule [] (att_fact 0 (FunApp(new_name_fun, [v])))
-        Terms.true_constraints (Rn att_pred0) false;
+        Terms.true_constraints (Rn att_pred0) Protocol;
 
     if non_interference then
       begin
@@ -2409,7 +2418,7 @@ let transl pi_state =
         let v = Terms.new_var_def_term t in
         let vc = Terms.new_var_def_term t in
         add_rule [Pred(att_pred, [vc]),NoMarking; Pred(att_pred, [v]),NoMarking; testunif_fact vc v,NoMarking]
-          (Pred(bad_pred, [])) Terms.true_constraints (TestEq(att_pred)) false;
+          (Pred(bad_pred, [])) Terms.true_constraints (TestEq(att_pred)) Protocol;
 
       end
         ) my_types;
@@ -2524,7 +2533,7 @@ let transl pi_state =
       comp_transl_process p;
       List.iter (fun ch ->
         if not ch.f_private then
-          add_rule [] (comp_fact (FunApp(ch, []))) Terms.true_constraints Init false) pi_state.pi_freenames;
+          add_rule [] (comp_fact (FunApp(ch, []))) Terms.true_constraints Init Protocol) pi_state.pi_freenames;
       List.iter comp_rules_for_function pi_state.pi_funs;
       Hashtbl.iter (fun _ -> comp_rules_for_function) Terms.tuple_table
     end;
