@@ -1,16 +1,13 @@
+# XOR Extension of ProVerif: ProVerif with Exclusive OR 
+
+ProVerif:
 Protocol verifier, copyright INRIA-CNRS, by Bruno Blanchet,
 Vincent Cheval, and Marc Sylvestre 2000-2026.
 
-(*************************************************************
-*                                                           *
-* XOR EXTENSION                                             *
-*                                                           *
-* Vincent Cheval and Stéphanie Delaune                      *
-*                                                           *
-* Copyright (C) INRIA, CNRS 2000-2026                       *
-* Copytight (C) University of Oxford, 2026                  *
-*                                                           *
-*************************************************************)
+XOR Extension:
+Vincent Cheval and Stéphanie Delaune
+Copyright (C) INRIA, CNRS 2000-2026
+Copytight (C) University of Oxford, 2026
 
 This software can be used to prove secrecy and authenticity properties
 of cryptographic protocols.
