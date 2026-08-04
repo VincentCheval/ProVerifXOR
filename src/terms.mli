@@ -330,6 +330,8 @@ val get_vars_constra : binder list ref -> constraints -> unit
 val get_vars_fact : binder list ref -> fact -> unit
 val get_vars_format : binder list ref -> format -> unit 
 
+val get_vars_not_in_follow_link2 : binder list ref -> binder list -> term -> unit
+
 (* [get_vars_pat accu pat] returns [accu] with the variables bound in [pat] added *)
 val get_vars_pat : binder list -> pattern -> binder list
 

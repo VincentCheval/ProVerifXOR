@@ -92,3 +92,8 @@ val are_facts_unifiable : fact -> fact -> bool
 (** [unify_terms f_next [(u1,v1);...;(un,vn)]] applies [f_next] on each most general substitution 
     [\sigma] such that [ui\sigma = vi\sigma] for all i=1...n. *)
 val unify_for_lemma_terms : (unit -> 'a) -> binder list -> (term * term) list -> 'a
+
+(** [unify_terms f_next [(u1,v1);...;(un,vn)]] applies [f_next vars] on each most general substitution
+    [\sigma] such that [ui\sigma = vi\sigma] for all i=1...n and [vars] is the list of variabble in 
+    [img(\sigma) \setminus vars(u1,v1,...,un,vn)] *)
+val unify_terms_record_fresh_variables : (binder list -> 'a) -> (term * term) list -> 'a

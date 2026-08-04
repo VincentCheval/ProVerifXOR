@@ -2698,3 +2698,13 @@ let unify_for_lemma_terms f_next priority_vars eq_list =
     unify_for_lemma_remaining_equations f_next priority_vars !remain_ref
   )
 
+let unify_terms_record_fresh_variables f_next l =
+  let l' = List.map (fun (t1,t2) -> Terms.copy_term4 t1, Terms.copy_term4 t2) l in
+  let vars = ref [] in
+  List.iter (fun (t1,t2) -> Terms.get_vars vars t1; Terms.get_vars vars t2) l';
+
+  unify_terms (fun () ->
+    let fresh_vars = ref [] in
+    List.iter (fun v -> Terms.get_vars_not_in_follow_link2 fresh_vars !vars (Var v)) !vars;
+    f_next !fresh_vars
+  ) l'

@@ -1375,6 +1375,14 @@ let rec get_vars_format vlist = function
   | FFunApp(_,args) -> List.iter (get_vars_format vlist) args
 
 
+let rec get_vars_not_in_follow_link2 accu_list vlist = function
+  | Var { link = TLink t ; _ } -> get_vars_not_in_follow_link2 accu_list vlist t
+  | Var v ->  
+      if not (List.memq v vlist) && not (List.memq v !accu_list)
+      then accu_list := v :: !accu_list
+  | FunApp(_,args) -> List.iter (get_vars_not_in_follow_link2 accu_list vlist) args
+  | FAC(_,margs) -> List.iter (fun (t,_) -> get_vars_not_in_follow_link2 accu_list vlist t) margs
+
 let rec get_unlinked_vars_acc vlist = function
     Var { link = TLink t; _ } -> get_unlinked_vars_acc vlist t
   | Var v -> if not (List.memq v (!vlist)) then vlist := v :: (!vlist)

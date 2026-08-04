@@ -515,24 +515,36 @@ let unify_list f_next cur_state tl1 tl2 =
     if !(cur_state.neg_success_conditions) != None
     then
       (* We cannot apply the syntactic equalities so we add them to last_step_unif *)
-      f_next
+      begin 
+        f_next
         { cur_state with
           last_step_unif_left = tl1 @ cur_state.last_step_unif_left;
           last_step_unif_right = tl2 @ cur_state.last_step_unif_right
         }
+      end
     else
       save_bound_vars (fun () ->
-        AC.Ac_unify.unify_terms (fun () ->
+        AC.Ac_unify.unify_terms_record_fresh_variables (fun fresh_vars ->
           (* We unify the previous element in last_step_unif if there are some *)
           if cur_state.last_step_unif_left != []
           then
             begin
-              AC.Ac_unify.unify_terms (fun () ->
-                f_next { cur_state with last_step_unif_left = []; last_step_unif_right = [] }
+              AC.Ac_unify.unify_terms_record_fresh_variables (fun fresh_vars' ->
+                f_next 
+                  { cur_state with 
+                    last_step_unif_left = []; 
+                    last_step_unif_right = [];  
+                    last_step_variables = fresh_vars' @ fresh_vars @ cur_state.last_step_variables
+                  };
+                raise Terms.Unify
               ) (List.combine cur_state.last_step_unif_left cur_state.last_step_unif_right)
               (* List.iter2 Terms.unify cur_state.last_step_unif_left cur_state.last_step_unif_right; *)    
             end
-          else f_next cur_state
+          else 
+            begin 
+              f_next { cur_state with last_step_variables = fresh_vars @ cur_state.last_step_variables };
+              raise Terms.Unify
+            end
         ) (List.combine tl1 tl2)
       )
 
@@ -610,7 +622,8 @@ let check_feasible f_next check cur_state =
     then
       save_bound_vars (fun () ->
         AC.Ac_unify.unify_terms (fun () ->
-          check_constraints ()
+          check_constraints ();
+          raise Terms.Unify
         ) (List.combine cur_state.last_step_unif_left cur_state.last_step_unif_right)
       )
     else
@@ -655,7 +668,8 @@ let end_destructor_group_no_test_unif next_f cur_state =
             last_step_unif_right = [];
             constra = constra;
             neg_success_conditions = ref None
-          }
+          };
+        raise Terms.Unify
       ) (List.combine cur_state.last_step_unif_left cur_state.last_step_unif_right)
     )
 
@@ -767,7 +781,6 @@ let end_destructor_group next_f occ cur_state =
             noninterf_constraints cur_state true occ
         | Some r ->
             assert (get_bound_vars () = []);
-
             Terms.auto_cleanup (fun () ->
               try
                 (* We unify the secrets with their variables *)
@@ -901,7 +914,9 @@ let apply_AC_variant next_f cur_state f t1 t2 =
   in
   List.iter (fun (lhs,rhs) ->
     unify_list (fun cur_state1 ->
-      next_f cur_state1 rhs
+      check_feasible_rewrite_rules (fun cur_state2 -> 
+        next_f cur_state2 rhs
+      ) true lhs cur_state1
     ) cur_state [t1;t2] lhs
   ) rw_rules
 
@@ -1570,12 +1585,15 @@ let rec transl_process cur_state process =
         assert (cur_state.last_step_unif_left == []); (* last_step_unif should have been appended unified *)
         (* Case "in" branch taken *)
         let neg_success_conditions = ref (Some (ref Terms.true_constraints)) in
+    
 
         begin_destructor_group (fun cur_state0 ->
           transl_term_incl_destructor (no_fail (fun cur_state1 pat1 ->
             transl_pat IfQueryNeedsIt (fun cur_state2 pat2 ->
               unify (
-                end_destructor_group (fun cur_state3 -> transl_process cur_state3 p) occ
+                end_destructor_group (fun cur_state3 -> 
+                  transl_process cur_state3 p
+                ) occ
               ) cur_state2 pat1 pat2
             ) cur_state1 pat
            ))
@@ -1593,15 +1611,19 @@ let rec transl_process cur_state process =
                  begin_destructor_group since we only apply at the end the
                  function end_destructor_group_no_test_unif *)
               transl_term_incl_destructor (fun cur_state1 pat1 ->
-                must_fail (end_destructor_group_no_test_unif (fun cur_state2 -> transl_process cur_state2 p')) cur_state1 pat1;
+                must_fail (end_destructor_group_no_test_unif (fun cur_state2 -> 
+                  transl_process cur_state2 p'
+                )) cur_state1 pat1;
                 no_fail (fun cur_state2 _ ->
-                  transl_pat_fail (end_destructor_group_no_test_unif (fun cur_state6 -> transl_process cur_state6 p'))
-                    cur_state2 pat pat1
+                  transl_pat_fail (end_destructor_group_no_test_unif (fun cur_state6 -> 
+                    transl_process cur_state6 p'
+                    )) cur_state2 pat pat1
                 ) cur_state1 pat1
               ) { cur_state with
                   hyp_tags = (LetTag occ) :: cur_state.hyp_tags } (OLet(occ)) t
           | Some r -> (* Use the neg_success_conditions has condition for taking
                         the else branch *)
+
              transl_process { cur_state with
                               constra = Terms.wedge_constraints !r cur_state.constra;
                               hyp_tags = (LetTag occ) :: cur_state.hyp_tags } p'

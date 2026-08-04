@@ -1553,8 +1553,6 @@ let verify_application_condition last_analysed_hist (n_idx_opt,n) (m_idx,m) matc
   Printf.printf "*** Verify Application Condition:\n"; *)
 
 let match_and_apply_lemma next_stage_no_match next_stage_match last_analyzed_hist ((hyp,concl,hist,constra,variant) as rule:marked_reduction) induction in_verification lemma =
-  (* Display.Text.display_lemmas [lemma];
-  Display.Text.display_rule_indep rule; *)
 
   let variables_rule = ref [] in
   List.iter (fun (fact,_) -> Terms.get_vars_fact variables_rule fact) hyp;
@@ -2687,8 +2685,6 @@ let saturate_hypotheses_for_non_variant (((hypl,concl,hist,constr,variant),_) as
 
 
 let redundant is_solved ruleset queue ((initrule, _) as annot_initrule) =
-  (* Printf.printf "** Redundancy: ";
-  Display.Text.display_rule_indep initrule; *)
 
   let ((_,initconcl,_,_,variant) as initrule',_) as annot_initrule' = 
     if is_solved 
@@ -2705,8 +2701,6 @@ let redundant is_solved ruleset queue ((initrule, _) as annot_initrule) =
   
 
   let rec redundant_rec ((hyp, _, hist, constra,variant) as rule, _) first =
-    (* Printf.printf "  Redundancy REC: ";
-    Display.Text.display_rule_indep rule; *)
     let sel_index = Selfun.selection_fun_redundant rule in
     if sel_index != -1 then
 
@@ -2721,8 +2715,6 @@ let redundant is_solved ruleset queue ((initrule, _) as annot_initrule) =
           if (first && add_data = Database.Solved false) || add_data = Database.Solved true
           then
             let check_fun ((_,concl,_,_,_) as r:marked_reduction) =
-              (* Printf.printf "   Composing with ";
-              Display.Text.display_rule_indep clause; *)
               if AC.Ac_unify.are_facts_matched concl initconcl then
                 let r' = elim_any_x (Database.remove_ground_public_terms (decompose_hyp_tuples r)) in
                 let annot_r' = Database.SubClause.generate_subsumption_data r' in
@@ -2938,9 +2930,6 @@ let complete_rules database lemmas inductive_lemmas =
           | _ -> not !Param.using_xor
         in
         
-        (* Printf.printf "** Rule unqueud: ";
-        Display.Text.display_rule_indep rule;
-        flush_all (); *)
         if ignore_redundant || not (redundant_glob database (match add_data with Solved _ -> true | _ -> false) (rule, sub_data))
         then 
           begin 
