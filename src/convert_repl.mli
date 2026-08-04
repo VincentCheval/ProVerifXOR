@@ -9,11 +9,14 @@
  *************************************************************)
 
 (*************************************************************
-
-XOR EXTENSION
-
-Vincent Cheval and Stéphanie Delaune
-
+*                                                           *
+* XOR EXTENSION                                             *
+*                                                           *
+* Vincent Cheval and Stéphanie Delaune                      *
+*                                                           *
+* Copyright (C) INRIA, CNRS 2000-2026                       *
+* Copytight (C) University of Oxford, 2026                  *
+*                                                           *
 *************************************************************)
 
 
